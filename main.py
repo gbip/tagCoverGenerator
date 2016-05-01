@@ -27,7 +27,8 @@ def displayTrack(cr, trackname, tracknumber):
     x_bearing, y_bearing, width, height = cr.text_extents(title)[:4]
     oldpos = ctx.get_current_point()
     ctx.move_to(textBPMVerticalPos,oldpos[1])
-    ctx.show_text(audio['BPM'][0])
+    #if (audio['BPM']):
+    #    ctx.show_text(audio['BPM'][0])
 
 def generateCover():
     i=1
@@ -35,10 +36,11 @@ def generateCover():
         displayTrack(ctx, file, i)
         i += 1
     surface.write_to_png ("example.png")
+    fileList.clear()
 
 def getPathFile() :
     global fileList
-    fileList = filedialog.askopenfilename()
+    fileList.append(filedialog.askopenfilename())
     print(fileList)
 
 def getPathDir() :
@@ -46,8 +48,9 @@ def getPathDir() :
     relevant_path = filedialog.askdirectory()
     if relevant_path:
         included_extenstions = ['mp3']
-        fileList = [fn for fn in os.listdir(relevant_path)
-                    if any(fn.endswith(ext) for ext in included_extenstions)]
+        for fn in os.listdir(relevant_path):
+            if any(fn.endswith(ext) for ext in included_extenstions):
+                fileList.append(relevant_path +"/"+ fn)
 
 
 #audio['title'] = u"Example Title"
@@ -66,15 +69,22 @@ ctx.paint()
 
 # --------- GUI --------- #
 
+#Setting up the main program frame
 top = tkinter.Tk()
+top.resizable(width=False, height=False)
+top.winfo_height()
+top.wm_title(string="CoverGenerator 0.1")
+top.wm_minsize(500,500)
 
+
+#The "Generate Cover" button. It calls the generateCover function on click
 run = tkinter.Button(top,text = "Generate Cover", command = generateCover)
 run.pack()
 
 browseFile = tkinter.Button(top, text = "Browse a file", command = getPathFile)
 browseFile.pack()
 
-browseDir = tkinter.Button(top, text = "Browse a direcotry", command = getPathDir)
+browseDir = tkinter.Button(top, text = "Browse a directory", command = getPathDir)
 browseDir.pack()
 
 
