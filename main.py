@@ -14,6 +14,13 @@ textBPMVerticalPos = 0.8
 fileList = []
 
 
+
+def pickBPMColor():
+    global textBPMColor
+    RGBColor = tkinter.colorchooser.askcolor()
+    textBPMColor = (RGBColor[0][0]/255, RGBColor[0][1]/255, RGBColor[0][2]/255)
+
+
 def displayTrack(cr, trackname, tracknumber):
     audio = EasyID3(trackname)
     print(audio['title'])
@@ -27,8 +34,7 @@ def displayTrack(cr, trackname, tracknumber):
     x_bearing, y_bearing, width, height = cr.text_extents(title)[:4]
     oldpos = ctx.get_current_point()
     ctx.move_to(textBPMVerticalPos,oldpos[1])
-    #if (audio['BPM']):
-    #    ctx.show_text(audio['BPM'][0])
+    ctx.show_text(audio['BPM'][0])
 
 def generateCover():
     i=1
@@ -86,6 +92,9 @@ browseFile.pack()
 
 browseDir = tkinter.Button(top, text = "Browse a directory", command = getPathDir)
 browseDir.pack()
+
+pickColor = tkinter.Button(top, text = "Pick a color for the BPM", command=pickBPMColor)
+pickColor.pack()
 
 
 top.mainloop()
