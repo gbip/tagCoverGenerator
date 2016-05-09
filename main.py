@@ -1,24 +1,79 @@
-import cairo, os, tkinter
+import cairo, os, tkinter, json
 from tkinter import filedialog, colorchooser
 from mutagen.easyid3 import EasyID3
 
 #test = "/home/paul/Music/test.mp3"
 #test2 = "/home/paul/Music/test2.mp3"
-textPosTopOffset = 0.1
-textPosVerticalOffset = 0.05
 
-textSize = 0.015
-textBPMColor = (0.8,0.4,0.2)
-textBPMVerticalPos = 0.8
+class settings:
+    __textSize = 0.015
+    __textBPMColor = (0.8, 0.4, 0.2)
+    __textBPMVerticalPos = 0.8
+    __configurationFile = "settings.ini"
+    def __init__(self):
+        self.textSize = 0.015
+        self.textBPMColor = (0.8,0.4,0.2)
+        self.textBPMVerticalPos =0.8
+    def getBPMColor(self):
+        return self.textBPMColor
 
-fileList = []
+    def getTextSize(self):
+        return self.textBPMColor
+
+    def getTextBPMVerticalOfffset(self):
+        return self.textBPMVerticalPos
+
+    def setBPMColor(self, color):
+        self.textBPMColor = color
+
+    def setTextSize(self, size):
+        self.textSize = size
+
+    def setTextBPMVerticalOffset(self, offset):
+        self.textBPMVerticalPos = offset
+
+    def createIniFile(self):
+        execDirPath = os.path.dirname(__file__)
+        print(execDirPath + "/" + self.configurationFile)
+        ini = open(execDirPath + "/" + self.configurationFile, mode='a')
+        ini.close()
+
+    def createIni(self,pathToIni):
+            with open(pathToIni, mode='w') as iniFile:
+                json.dump({"color": cairoColorToTkColor(textBPMColor)}, iniFile)
+
+    def parseIniFile(self,pathToIni):
+            with open(pathToIni, mode='r') as iniFile:
+                jsonSettings = json.load(iniFile)
+                print(self.textBPMColor)
+                self.setBPMColor(jsonSettings["color"])
+                self.setBPMColor(TkColorToCairoColor(tuple(textBPMColor)))
+                print(self.getBPMColor(textBPMColor))
+
+class cover:
+    fileList = []
+
+programSettings = settings
+
+def cairoColorToTkColor(color):
+    result = []
+    for i in color : result.append(int(i*255))
+    return tuple(result)
+
+def TkColorToCairoColor(color):
+    result = []
+    for i in color : result.append(i/255)
+    return tuple(result)
 
 
+def setBPMColor(color):
+    global textBPMColor
+    textBPMColor = (color[0], color[1], color[2])
 
 def pickBPMColor():
-    global textBPMColor
-    RGBColor = tkinter.colorchooser.askcolor()
-    textBPMColor = (RGBColor[0][0]/255, RGBColor[0][1]/255, RGBColor[0][2]/255)
+    RGBColor = tkinter.colorchooser.askcolor(cairoColorToTkColor(textBPMColor))
+    if (RGBColor):
+        setBPMColor([RGBColor[0][0]/255, RGBColor[0][1]/255, RGBColor[0][2]/255])
 
 
 def displayTrack(cr, trackname, tracknumber):
@@ -27,7 +82,7 @@ def displayTrack(cr, trackname, tracknumber):
     title = audio['title'][0]
     ctx.set_source_rgb(0.0, 0.0, 0.0)
     ctx.select_font_face("Georgia",cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(textSize)
+    ctx.set_font_size(programSettings.textSize)
     ctx.move_to(0.05,(0.01+textPosVerticalOffset)*tracknumber+textPosTopOffset)
     ctx.show_text(title)
     ctx.set_source_rgb(textBPMColor[0], textBPMColor[1], textBPMColor[2])
