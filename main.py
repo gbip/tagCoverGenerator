@@ -3,32 +3,34 @@ from tkinter import filedialog, colorchooser
 from mutagen.easyid3 import EasyID3
 
 #test = "/home/paul/Music/test.mp3"
-#test2 = "/home/paul/Music/test2.mp3"
+#testt2 = "/home/paul/Music/test2.mp3"
 
 class settings:
-    __textSize = 0.015
-    __textBPMColor = (0.8, 0.4, 0.2)
-    __textBPMVerticalPos = 0.8
-    __configurationFile = "settings.ini"
+    textSize = 0.015
+    textBPMColor = (0.8, 0.4, 0.2)
+    textBPMVerticalPos = 0.8
+    configurationFile = "settings.ini"
     def __init__(self):
         self.textSize = 0.015
         self.textBPMColor = (0.8,0.4,0.2)
         self.textBPMVerticalPos =0.8
+    @textBPMColor
     def getBPMColor(self):
         return self.textBPMColor
-
+    @textSize
     def getTextSize(self):
         return self.textBPMColor
-
+    @textBPMVerticalPos
     def getTextBPMVerticalOfffset(self):
         return self.textBPMVerticalPos
 
+    @textBPMColor
     def setBPMColor(self, color):
         self.textBPMColor = color
-
+    @textSize
     def setTextSize(self, size):
         self.textSize = size
-
+    @textBPMVerticalPos
     def setTextBPMVerticalOffset(self, offset):
         self.textBPMVerticalPos = offset
 
