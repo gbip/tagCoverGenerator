@@ -1,119 +1,84 @@
-import cairo, os, tkinter, json
+'''
+
+(c) Paul Florence 2016
+
+This file is part of Mp3CoverGenerator.
+Mp3CoverGenerator is free software: you can redistribute it and / or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+Mp3CoverGenerator is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with Foobar. If not, see < http://
+    www.gnu.org / licenses / >.2
+'''
+import cairo, os, tkinter, json, Settings
 from tkinter import filedialog, colorchooser
 from mutagen.easyid3 import EasyID3
 
 #test = "/home/paul/Music/test.mp3"
 #testt2 = "/home/paul/Music/test2.mp3"
 
-class settings:
-    textSize = 0.015
-    textBPMColor = (0.8, 0.4, 0.2)
-    textBPMVerticalPos = 0.8
-    configurationFile = "settings.ini"
-    def __init__(self):
-        self.textSize = 0.015
-        self.textBPMColor = (0.8,0.4,0.2)
-        self.textBPMVerticalPos =0.8
-    @textBPMColor
-    def getBPMColor(self):
-        return self.textBPMColor
-    @textSize
-    def getTextSize(self):
-        return self.textBPMColor
-    @textBPMVerticalPos
-    def getTextBPMVerticalOfffset(self):
-        return self.textBPMVerticalPos
-
-    @textBPMColor
-    def setBPMColor(self, color):
-        self.textBPMColor = color
-    @textSize
-    def setTextSize(self, size):
-        self.textSize = size
-    @textBPMVerticalPos
-    def setTextBPMVerticalOffset(self, offset):
-        self.textBPMVerticalPos = offset
-
-    def createIniFile(self):
-        execDirPath = os.path.dirname(__file__)
-        print(execDirPath + "/" + self.configurationFile)
-        ini = open(execDirPath + "/" + self.configurationFile, mode='a')
-        ini.close()
-
-    def createIni(self,pathToIni):
-            with open(pathToIni, mode='w') as iniFile:
-                json.dump({"color": cairoColorToTkColor(textBPMColor)}, iniFile)
-
-    def parseIniFile(self,pathToIni):
-            with open(pathToIni, mode='r') as iniFile:
-                jsonSettings = json.load(iniFile)
-                print(self.textBPMColor)
-                self.setBPMColor(jsonSettings["color"])
-                self.setBPMColor(TkColorToCairoColor(tuple(textBPMColor)))
-                print(self.getBPMColor(textBPMColor))
 
 class cover:
-    fileList = []
+    def __init__(self):
+        self._fileList = []
 
-programSettings = settings
-
-def cairoColorToTkColor(color):
-    result = []
-    for i in color : result.append(int(i*255))
-    return tuple(result)
-
-def TkColorToCairoColor(color):
-    result = []
-    for i in color : result.append(i/255)
-    return tuple(result)
+    @property
+    def fileList(self):
+        return self._fileList
 
 
-def setBPMColor(color):
-    global textBPMColor
-    textBPMColor = (color[0], color[1], color[2])
+coverProperty = cover()
 
 def pickBPMColor():
-    RGBColor = tkinter.colorchooser.askcolor(cairoColorToTkColor(textBPMColor))
+    RGBColor = tkinter.colorchooser.askcolor(Settings.cairoColorToTkColor(Settings.programSettings.textBPMColor))
     if (RGBColor):
-        setBPMColor([RGBColor[0][0]/255, RGBColor[0][1]/255, RGBColor[0][2]/255])
+        Settings.programSettings.textBPMColor = ([RGBColor[0][0]/255, RGBColor[0][1]/255, RGBColor[0][2]/255])
 
 
 def displayTrack(cr, trackname, tracknumber):
+    global ctx
     audio = EasyID3(trackname)
     print(audio['title'])
     title = audio['title'][0]
+
     ctx.set_source_rgb(0.0, 0.0, 0.0)
     ctx.select_font_face("Georgia",cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(programSettings.textSize)
-    ctx.move_to(0.05,(0.01+textPosVerticalOffset)*tracknumber+textPosTopOffset)
+    ctx.set_font_size(Settings.programSettings.textSize)
+
+    ctx.move_to(0.05,(0.01+Settings.programSettings.textVerticalOffset)*tracknumber+Settings.programSettings.textVerticalPos)
     ctx.show_text(title)
-    ctx.set_source_rgb(textBPMColor[0], textBPMColor[1], textBPMColor[2])
-    x_bearing, y_bearing, width, height = cr.text_extents(title)[:4]
+
+    ctx.set_source_rgb(Settings.programSettings.textBPMColor[0], Settings.programSettings.textBPMColor[1], Settings.programSettings.textBPMColor[2])
+
     oldpos = ctx.get_current_point()
-    ctx.move_to(textBPMVerticalPos,oldpos[1])
+    ctx.move_to(Settings.programSettings.textVerticalPos,oldpos[1])
+
     ctx.show_text(audio['BPM'][0])
 
 def generateCover():
+    global coverProperty, ctx
     i=1
-    for file in fileList:
+    for file in coverProperty.fileList:
         displayTrack(ctx, file, i)
         i += 1
     surface.write_to_png ("example.png")
-    fileList.clear()
+    coverProperty.fileList.clear()
 
 def getPathFile() :
-    global fileList
-    fileList.append(filedialog.askopenfilename())
-    print(fileList)
+    global coverProperty
+    coverProperty.fileList.append(filedialog.askopenfilename())
+    print(coverProperty.fileList)
 
 def getPathDir() :
-    global fileList
     relevant_path = filedialog.askdirectory()
     if relevant_path:
         included_extenstions = ['mp3']
         for fn in os.listdir(relevant_path):
             if any(fn.endswith(ext) for ext in included_extenstions):
-                fileList.append(relevant_path +"/"+ fn)
+                coverProperty.fileList.append(relevant_path +"/"+ fn)
 
 
 #audio['title'] = u"Example Title"
@@ -129,7 +94,6 @@ ctx = cairo.Context (surface)
 ctx.scale (width, height) # Normalizing the canvas
 ctx.set_source_rgb(0.98,0.98,0.98)
 ctx.paint()
-
 # --------- GUI --------- #
 
 #Setting up the main program frame
