@@ -13,7 +13,7 @@ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the GNU Gene
 You should have received a copy of the GNU General Public License along with Foobar. If not, see < http://
     www.gnu.org / licenses / >.2
 '''
-import cairo, os, tkinter, json, Settings
+import cairo, os, tkinter, json, Settings, cairoToTk
 from tkinter import filedialog, colorchooser
 from mutagen.easyid3 import EasyID3
 
@@ -90,6 +90,7 @@ def getPathDir() :
 width = 1024
 height = 1024
 surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
+
 ctx = cairo.Context (surface)
 ctx.scale (width, height) # Normalizing the canvas
 ctx.set_source_rgb(0.98,0.98,0.98)
@@ -116,6 +117,10 @@ browseDir.pack()
 
 pickColor = tkinter.Button(top, text = "Pick a color for the BPM", command=pickBPMColor)
 pickColor.pack()
+
+
+previewWindo = tkinter.Frame
+preview = tkinter.PhotoImage(cairoToTk.photoimage_from_context(surface, width=100, height=100))
 
 
 top.mainloop()
