@@ -10,18 +10,20 @@ version.
 Mp3CoverGenerator is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
 warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with Foobar. If not, see < http://
+You should have received a copy of the GNU General Public License along with Mp3CoverGenerator. If not, see < http://
     www.gnu.org / licenses / >.2
 '''
 
-import json, os
+import json,os
 class settings:
-    configurationFile = "settings.ini"
     def __init__(self):
         self._textSize = 0.015
-        self._textBPMColor = (0.8,0.4,0.2)
-        self._textVerticalPos = 0.8
+        self._textBPMColor = (0.8, 0.4, 0.2)
+        self._textVerticalPos = 0.2
         self._textVerticalOffset = 0.05
+        self._previousFileList = []
+        self.__configurationFile = os.path.dirname(__file__) + "/settings.ini"
+        self._cover = cover()
 
     @property
     def textBPMColor(self):
@@ -35,6 +37,12 @@ class settings:
     @property
     def textVerticalOffset(self):
         return self._textVerticalOffset
+    @property
+    def previousFileList(self):
+        return self._previousFileList
+    @property
+    def cover(self):
+        return self._cover
 
     @textBPMColor.setter
     def textBPMColor(self, color):
@@ -48,24 +56,32 @@ class settings:
     @textVerticalOffset.setter
     def textVerticalOffset(self, offset):
         self._textVerticalOffset = offset
+    @previousFileList.setter
+    def previousFileList(self, newList):
+        self._previousFileList = newList
+    @cover.setter
+    def cover(self, newCover):
+        self._cover = newCover
 
     def createIniFile(self):
         execDirPath = os.path.dirname(__file__)
-        print(execDirPath + "/" + self._configurationFile)
-        ini = open(execDirPath + "/" + self._configurationFile, mode='a')
+        print(self.__configurationFile)
+        ini = open(self.__configurationFile, mode='a')
         ini.close()
 
-    def createIni(self,pathToIni):
-            with open(pathToIni, mode='w') as iniFile:
-                json.dump({"color": cairoColorToTkColor(_textBPMColor)}, iniFile)
+    def regenerateIni(self):
+            with open(self.__configurationFile, mode='w') as iniFile:
+                json.dump({"color": cairoColorToTkColor(self._textBPMColor), "text size": self._textSize, "fileList":self._cover.fileList}, iniFile)
+            print("Saved settings to" + self.__configurationFile)
 
-    def parseIniFile(self,pathToIni):
-            with open(pathToIni, mode='r') as iniFile:
+    def parseIniFile(self):
+            with open(self.__configurationFile, mode='r') as iniFile:
                 jsonSettings = json.load(iniFile)
-                print(self.textBPMColor)
-                self.setBPMColor(jsonSettings["color"])
-                self.setBPMColor(TkColorToCairoColor(tuple(_textBPMColor)))
-                print(self.getBPMColor(_textBPMColor))
+                self._textBPMColor =  TkColorToCairoColor(jsonSettings["color"])
+                self._textSize = jsonSettings["text size"]
+                self._cover.fileList = jsonSettings["fileList"]
+
+
 
 def cairoColorToTkColor(color):
     result = []
@@ -76,5 +92,35 @@ def TkColorToCairoColor(color):
     result = []
     for i in color : result.append(i/255)
     return tuple(result)
+
+class cover:
+    def __init__(self):
+        self._fileList = []
+
+    @property
+    def fileList(self):
+        return self._fileList
+
+    @fileList.setter
+    def fileList(self, value):
+        self._fileList = value
+
+    def SizeOfLongestTitle(self):
+        bestScore = 0
+        for title in self.fileList:
+            if len(title) > bestScore:
+                bestScore = len(title)
+        return bestScore
+    def getWorkingData(self):
+        prout = ["erer", "jeiv"]
+        if len(self.fileList) != 1:
+            return prout[0].rpartition("/")[0]
+        else:
+            return self.fileList[0]
+    def toJson(self):
+        return json.dump({"fileList": self._fileList})
+
+
+
 
 programSettings = settings()

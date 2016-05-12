@@ -10,75 +10,68 @@ version.
 Mp3CoverGenerator is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
 warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with Foobar. If not, see < http://
+You should have received a copy of the GNU General Public License along with Mp3CoverGenerator. If not, see < http://
     www.gnu.org / licenses / >.2
 '''
-import cairo, os, tkinter, json, Settings, cairoToTk
+import os, tkinter, json, Settings, cairo, argparse
 from tkinter import filedialog, colorchooser
 from mutagen.easyid3 import EasyID3
 
-#test = "/home/paul/Music/test.mp3"
-#testt2 = "/home/paul/Music/test2.mp3"
+#coverProperty = Settings.cover()
+Settings.programSettings.parseIniFile()
 
-
-class cover:
-    def __init__(self):
-        self._fileList = []
-
-    @property
-    def fileList(self):
-        return self._fileList
-
-
-coverProperty = cover()
 
 def pickBPMColor():
     RGBColor = tkinter.colorchooser.askcolor(Settings.cairoColorToTkColor(Settings.programSettings.textBPMColor))
-    if (RGBColor):
+    if RGBColor[0]:
         Settings.programSettings.textBPMColor = ([RGBColor[0][0]/255, RGBColor[0][1]/255, RGBColor[0][2]/255])
 
 
 def displayTrack(cr, trackname, tracknumber):
     global ctx
     audio = EasyID3(trackname)
-    print(audio['title'])
-    title = audio['title'][0]
 
     ctx.set_source_rgb(0.0, 0.0, 0.0)
     ctx.select_font_face("Georgia",cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
     ctx.set_font_size(Settings.programSettings.textSize)
 
-    ctx.move_to(0.05,(0.01+Settings.programSettings.textVerticalOffset)*tracknumber+Settings.programSettings.textVerticalPos)
-    ctx.show_text(title)
+    if 'title' in audio:
+        print(audio['title'])
+        title = audio['title'][0]
+        ctx.move_to(0.05,(0.01+Settings.programSettings.textVerticalOffset)*tracknumber+Settings.programSettings.textVerticalPos)
+        ctx.show_text(title)
 
     ctx.set_source_rgb(Settings.programSettings.textBPMColor[0], Settings.programSettings.textBPMColor[1], Settings.programSettings.textBPMColor[2])
-
     oldpos = ctx.get_current_point()
-    ctx.move_to(Settings.programSettings.textVerticalPos,oldpos[1])
-
-    ctx.show_text(audio['BPM'][0])
+    print(Settings.programSettings.cover.SizeOfLongestTitle()*Settings.programSettings.textSize-0.8)
+    ctx.move_to(Settings.programSettings.cover.SizeOfLongestTitle()*Settings.programSettings.textSize-0.8, oldpos[1])
+    if 'BPM' in audio:
+        ctx.show_text(audio['BPM'][0])
 
 def generateCover():
-    global coverProperty, ctx
+    global ctx, surface
     i=1
-    for file in coverProperty.fileList:
+    for file in Settings.programSettings.cover.fileList:
         displayTrack(ctx, file, i)
         i += 1
     surface.write_to_png ("example.png")
-    coverProperty.fileList.clear()
+    Settings.programSettings.cover.fileList.clear()
 
 def getPathFile() :
-    global coverProperty
-    coverProperty.fileList.append(filedialog.askopenfilename())
-    print(coverProperty.fileList)
+    temp = []
+    temp.append(filedialog.askopenfilename())
+    Settings.programSettings.cover.fileList = temp
+    print(Settings.programSettings.cover.fileList)
 
 def getPathDir() :
     relevant_path = filedialog.askdirectory()
+    pathList = []
     if relevant_path:
         included_extenstions = ['mp3']
         for fn in os.listdir(relevant_path):
             if any(fn.endswith(ext) for ext in included_extenstions):
-                coverProperty.fileList.append(relevant_path +"/"+ fn)
+                pathList.append(relevant_path +"/"+ fn)
+    Settings.programSettings.cover.fileList = pathList
 
 
 #audio['title'] = u"Example Title"
@@ -89,12 +82,15 @@ def getPathDir() :
 
 width = 1024
 height = 1024
-surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
+surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
 
-ctx = cairo.Context (surface)
-ctx.scale (width, height) # Normalizing the canvas
+ctx = cairo.Context(surface)
+ctx.scale(width, height) # Normalizing the canvas
 ctx.set_source_rgb(0.98,0.98,0.98)
 ctx.paint()
+
+def saveSettings():
+    Settings.programSettings.regenerateIni()
 # --------- GUI --------- #
 
 #Setting up the main program frame
@@ -118,10 +114,8 @@ browseDir.pack()
 pickColor = tkinter.Button(top, text = "Pick a color for the BPM", command=pickBPMColor)
 pickColor.pack()
 
-
-previewWindo = tkinter.Frame
-preview = tkinter.PhotoImage(cairoToTk.photoimage_from_context(surface, width=100, height=100))
-
+saveSettings = tkinter.Button(top, text="Save settings", command=saveSettings)
+saveSettings.pack()
 
 top.mainloop()
 
