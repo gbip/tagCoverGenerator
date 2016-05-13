@@ -13,7 +13,7 @@ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the GNU Gene
 You should have received a copy of the GNU General Public License along with Mp3CoverGenerator. If not, see < http://
     www.gnu.org / licenses / >.2
 '''
-import os, tkinter, json, Settings, cairo, argparse
+import os, tkinter, json, Settings, cairo, argparse, sys
 from tkinter import filedialog, colorchooser
 from mutagen.easyid3 import EasyID3
 
@@ -71,8 +71,24 @@ def getPathDir() :
         for fn in os.listdir(relevant_path):
             if any(fn.endswith(ext) for ext in included_extenstions):
                 pathList.append(relevant_path +"/"+ fn)
+                pathList = sorted(pathList)
     Settings.programSettings.cover.fileList = pathList
 
+def saveSettingsAndQuit():
+    Settings.programSettings.regenerateIni()
+    sys.exit(0)
+
+def  quitWithoutSaving():
+    sys.exit(0)
+
+def quitDialog():
+        window = tkinter.Toplevel()
+        dialog = tkinter.Label(window, text="Save settings before quitting ?")
+        dialog.pack()
+        yes = tkinter.Button(window, text="Yes", command=saveSettingsAndQuit)
+        yes.pack()
+        no = tkinter.Button(window, text="No", command=quitWithoutSaving)
+        no.pack()
 
 #audio['title'] = u"Example Title"
 #audio['artist'] = u"Me"
@@ -89,8 +105,6 @@ ctx.scale(width, height) # Normalizing the canvas
 ctx.set_source_rgb(0.98,0.98,0.98)
 ctx.paint()
 
-def saveSettings():
-    Settings.programSettings.regenerateIni()
 # --------- GUI --------- #
 
 #Setting up the main program frame
@@ -99,7 +113,6 @@ top.resizable(width=False, height=False)
 top.winfo_height()
 top.wm_title(string="CoverGenerator 0.1")
 top.wm_minsize(500,500)
-
 
 #The "Generate Cover" button. It calls the generateCover function on click
 run = tkinter.Button(top,text = "Generate Cover", command = generateCover)
@@ -114,8 +127,11 @@ browseDir.pack()
 pickColor = tkinter.Button(top, text = "Pick a color for the BPM", command=pickBPMColor)
 pickColor.pack()
 
-saveSettings = tkinter.Button(top, text="Save settings", command=saveSettings)
-saveSettings.pack()
+#saveSettings = tkinter.Button(top, text="Save settings", command=saveSettings)
+#saveSettings.pack()
+
+quitDialog = tkinter.Button(top, text="quit", command=quitDialog)
+quitDialog.pack()
 
 top.mainloop()
 

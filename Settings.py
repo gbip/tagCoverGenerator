@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License along with Mp3
     www.gnu.org / licenses / >.2
 '''
 
-import json,os
+import json,os, tkinter
 class settings:
     def __init__(self):
         self._textSize = 0.015
@@ -71,15 +71,21 @@ class settings:
 
     def regenerateIni(self):
             with open(self.__configurationFile, mode='w') as iniFile:
-                json.dump({"color": cairoColorToTkColor(self._textBPMColor), "text size": self._textSize, "fileList":self._cover.fileList}, iniFile)
+                json.dump({"color": cairoColorToTkColor(self._textBPMColor),
+                           "text size": self._textSize,
+                           "fileList":self._cover.fileList}, iniFile)
+
             print("Saved settings to" + self.__configurationFile)
 
     def parseIniFile(self):
-            with open(self.__configurationFile, mode='r') as iniFile:
+        self.createIniFile()
+        with open(self.__configurationFile, mode='r') as iniFile:
+            if iniFile:
                 jsonSettings = json.load(iniFile)
-                self._textBPMColor =  TkColorToCairoColor(jsonSettings["color"])
+                self._textBPMColor = TkColorToCairoColor(jsonSettings["color"])
                 self._textSize = jsonSettings["text size"]
                 self._cover.fileList = jsonSettings["fileList"]
+
 
 
 
