@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License along with Mp3
     www.gnu.org / licenses / >.2
 '''
 
-import json,os, tkinter
+import json,os
 class settings:
     def __init__(self):
         self._textSize = 0.015

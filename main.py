@@ -17,27 +17,9 @@ import os, tkinter, json, Settings, cairo, argparse, sys
 from tkinter import filedialog, colorchooser
 from mutagen.easyid3 import EasyID3
 
-Settings.programSettings.parseIniFile()
-
 parser = argparse.ArgumentParser(description='Generate a cover from mp3 tag (and more)')
 parser.add_argument('--file','-f', help="Pass a/some file(s) to process")
-parser.add_argument('--directory','-d', help="Pass a directory to process")
-
-args = parser.parse_args()
-
-if args.file is not None:
-    if os.path.exists(args.file) and os.path.isfile(args.file):
-        print("Executing the script on the file :" + args.file)
-        Settings.programSettings.cover.fileList = [args.file]
-    else:
-        raise FileNotFoundError('Invalid file specified')
-if args.directory is not None and Settings.programSettings.cover.fileList is None:
-    if os.path.exists(args.directory) and os.path.isdir(args.directory):
-        print("Executing the script on the directory :" + args.directory)
-        Settings.programSettings.cover.fileList = args.directory
-    else:
-        raise FileNotFoundError("Invalid directory specified")
-
+parser.add_argument('--directory','-d', help="Pass a directory to process", nargs='+')
 
 def pickBPMColor():
     RGBColor = tkinter.colorchooser.askcolor(Settings.cairoColorToTkColor(Settings.programSettings.textBPMColor))
@@ -80,16 +62,16 @@ def getPathFile() :
     print(Settings.programSettings.cover.fileList)
 
 def getPathDir(**kwargs) :
-    if kwargs is not None:
-        for key, value in kwargs.iteritems():
-            if key == askdir and value is True:
-                relevant_path = filedialog.askdirectory()
+    if len(kwargs)>=1:
+        for key, value in kwargs.items():
+            if key == 'dir':
+                relevant_path = value
             else :
-                if key == dir:
-                    relevant_path = value
-                else :
-                    raise SyntaxError('If askdir is not setted you should give a path to a directory')
+                raise SyntaxError("Expected a directory")
+    else:
+        relevant_path = filedialog.askdirectory()
 
+    print(relevant_path)
     pathList = []
     if relevant_path:
         included_extenstions = ['mp3']
@@ -133,30 +115,52 @@ ctx.paint()
 # --------- GUI --------- #
 
 #Setting up the main program frame
-top = tkinter.Tk()
-top.resizable(width=False, height=False)
-top.winfo_height()
-top.wm_title(string="CoverGenerator 0.1")
-top.wm_minsize(500,500)
 
-#The "Generate Cover" button. It calls the generateCover function on click
-run = tkinter.Button(top,text = "Generate Cover", command = generateCover)
-run.pack()
+args = parser.parse_args()
+if len(sys.argv)>1:
+    if args.file is not None:
+        print("je passe")
+        if os.path.exists(args.file) and os.path.isfile(args.file):
+            print("Executing the script on the file :" + args.file)
+            Settings.programSettings.cover.fileList = [args.file]
+        else:
+            raise FileNotFoundError('Invalid file specified')
 
-browseFile = tkinter.Button(top, text = "Browse a file", command = getPathFile)
-browseFile.pack()
+    if args.directory is not None and not len(Settings.programSettings.cover.fileList) > 1:
+        # special path formated specially for os.path.[...] to work
+        args.directory = ' '.join(args.directory)
+        osDir = args.directory.replace("\\", "")
+        if os.path.exists(osDir) and os.path.isdir(osDir):
+            print("Executing the script on the directory :" + args.directory)
+            getPathDir(dir=args.directory)
+        else:
+            raise FileNotFoundError("Invalid directory specified")
+    generateCover()
+else:
+    Settings.programSettings.parseIniFile()
+    top = tkinter.Tk()
+    top.resizable(width=False, height=False)
+    top.winfo_height()
+    top.wm_title(string="CoverGenerator 0.1")
+    top.wm_minsize(500,500)
 
-browseDir = tkinter.Button(top, text = "Browse a directory", command = getPathDir)
-browseDir.pack()
+    #The "Generate Cover" button. It calls the generateCover function on click
+    run = tkinter.Button(top,text = "Generate Cover", command = generateCover)
+    run.pack()
 
-pickColor = tkinter.Button(top, text = "Pick a color for the BPM", command=pickBPMColor)
-pickColor.pack()
+    browseFile = tkinter.Button(top, text = "Browse a file", command = getPathFile)
+    browseFile.pack()
 
-#saveSettings = tkinter.Button(top, text="Save settings", command=saveSettings)
-#saveSettings.pack()
+    browseDir = tkinter.Button(top, text = "Browse a directory", command = getPathDir)
+    browseDir.pack()
 
-quitDialog = tkinter.Button(top, text="Quit", command=quitDialog)
-quitDialog.pack()
+    pickColor = tkinter.Button(top, text = "Pick a color for the BPM", command=pickBPMColor)
+    pickColor.pack()
 
-top.mainloop()
+    #saveSettings = tkinter.Button(top, text="Save settings", command=saveSettings)
+    #saveSettings.pack()
 
+    quitDialog = tkinter.Button(top, text="Quit", command=quitDialog)
+    quitDialog.pack()
+
+    top.mainloop()
