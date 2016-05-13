@@ -17,8 +17,26 @@ import os, tkinter, json, Settings, cairo, argparse, sys
 from tkinter import filedialog, colorchooser
 from mutagen.easyid3 import EasyID3
 
-#coverProperty = Settings.cover()
 Settings.programSettings.parseIniFile()
+
+parser = argparse.ArgumentParser(description='Generate a cover from mp3 tag (and more)')
+parser.add_argument('--file','-f', help="Pass a/some file(s) to process")
+parser.add_argument('--directory','-d', help="Pass a directory to process")
+
+args = parser.parse_args()
+
+if args.file is not None:
+    if os.path.exists(args.file) and os.path.isfile(args.file):
+        print("Executing the script on the file :" + args.file)
+        Settings.programSettings.cover.fileList = [args.file]
+    else:
+        raise FileNotFoundError('Invalid file specified')
+if args.directory is not None and Settings.programSettings.cover.fileList is None:
+    if os.path.exists(args.directory) and os.path.isdir(args.directory):
+        print("Executing the script on the directory :" + args.directory)
+        Settings.programSettings.cover.fileList = args.directory
+    else:
+        raise FileNotFoundError("Invalid directory specified")
 
 
 def pickBPMColor():
@@ -36,14 +54,12 @@ def displayTrack(cr, trackname, tracknumber):
     ctx.set_font_size(Settings.programSettings.textSize)
 
     if 'title' in audio:
-        print(audio['title'])
         title = audio['title'][0]
         ctx.move_to(0.05,(0.01+Settings.programSettings.textVerticalOffset)*tracknumber+Settings.programSettings.textVerticalPos)
         ctx.show_text(title)
 
     ctx.set_source_rgb(Settings.programSettings.textBPMColor[0], Settings.programSettings.textBPMColor[1], Settings.programSettings.textBPMColor[2])
     oldpos = ctx.get_current_point()
-    print(Settings.programSettings.cover.SizeOfLongestTitle()*Settings.programSettings.textSize-0.8)
     ctx.move_to(Settings.programSettings.cover.SizeOfLongestTitle()*Settings.programSettings.textSize-0.8, oldpos[1])
     if 'BPM' in audio:
         ctx.show_text(audio['BPM'][0])
@@ -63,8 +79,17 @@ def getPathFile() :
     Settings.programSettings.cover.fileList = temp
     print(Settings.programSettings.cover.fileList)
 
-def getPathDir() :
-    relevant_path = filedialog.askdirectory()
+def getPathDir(**kwargs) :
+    if kwargs is not None:
+        for key, value in kwargs.iteritems():
+            if key == askdir and value is True:
+                relevant_path = filedialog.askdirectory()
+            else :
+                if key == dir:
+                    relevant_path = value
+                else :
+                    raise SyntaxError('If askdir is not setted you should give a path to a directory')
+
     pathList = []
     if relevant_path:
         included_extenstions = ['mp3']
@@ -130,7 +155,7 @@ pickColor.pack()
 #saveSettings = tkinter.Button(top, text="Save settings", command=saveSettings)
 #saveSettings.pack()
 
-quitDialog = tkinter.Button(top, text="quit", command=quitDialog)
+quitDialog = tkinter.Button(top, text="Quit", command=quitDialog)
 quitDialog.pack()
 
 top.mainloop()

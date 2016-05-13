@@ -21,7 +21,6 @@ class settings:
         self._textBPMColor = (0.8, 0.4, 0.2)
         self._textVerticalPos = 0.2
         self._textVerticalOffset = 0.05
-        self._previousFileList = []
         self.__configurationFile = os.path.dirname(__file__) + "/settings.ini"
         self._cover = cover()
 
@@ -38,9 +37,6 @@ class settings:
     def textVerticalOffset(self):
         return self._textVerticalOffset
     @property
-    def previousFileList(self):
-        return self._previousFileList
-    @property
     def cover(self):
         return self._cover
 
@@ -56,9 +52,6 @@ class settings:
     @textVerticalOffset.setter
     def textVerticalOffset(self, offset):
         self._textVerticalOffset = offset
-    @previousFileList.setter
-    def previousFileList(self, newList):
-        self._previousFileList = newList
     @cover.setter
     def cover(self, newCover):
         self._cover = newCover
@@ -79,12 +72,17 @@ class settings:
 
     def parseIniFile(self):
         self.createIniFile()
-        with open(self.__configurationFile, mode='r') as iniFile:
-            if iniFile:
-                jsonSettings = json.load(iniFile)
-                self._textBPMColor = TkColorToCairoColor(jsonSettings["color"])
-                self._textSize = jsonSettings["text size"]
-                self._cover.fileList = jsonSettings["fileList"]
+        if os.stat(self.__configurationFile).st_size > 0:
+            print("Configuration file found, using it.")
+            with open(self.__configurationFile, mode='r') as iniFile:
+                if iniFile:
+                    jsonSettings = json.load(iniFile)
+                    self._textBPMColor = TkColorToCairoColor(jsonSettings["color"])
+                    self._textSize = jsonSettings["text size"]
+                    self._cover.fileList = jsonSettings["fileList"]
+        else:
+            print("No configuration file found, generating a new one for you.")
+            self.regenerateIni()
 
 
 
