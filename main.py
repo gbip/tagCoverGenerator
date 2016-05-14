@@ -17,35 +17,41 @@ import os, tkinter, json, Settings, cairo, argparse, sys
 from tkinter import filedialog, colorchooser
 from mutagen.easyid3 import EasyID3
 
+# --------- Argument parser --------- #
+
 parser = argparse.ArgumentParser(description='Generate a cover from mp3 tag (and more)')
 parser.add_argument('--file','-f', help="Pass a/some file(s) to process")
 parser.add_argument('--directory','-d', help="Pass a directory to process", nargs='+')
+parser.add_argument('--sort', '-s', help="Choose a sorting option, default: by alphabeletical order from the title field. Choose between: byTitle, byFilename, by tagNumber.")
 
+# --------- Function declaration --------- #
+
+#Ask the user for a color and store it in a Settings object
 def pickBPMColor():
     RGBColor = tkinter.colorchooser.askcolor(Settings.cairoColorToTkColor(Settings.programSettings.textBPMColor))
     if RGBColor[0]:
         Settings.programSettings.textBPMColor = ([RGBColor[0][0]/255, RGBColor[0][1]/255, RGBColor[0][2]/255])
 
-
+#Add a track to the cairo context matchin the specified user input stored in a Settings object
 def displayTrack(cr, trackname, tracknumber):
-    global ctx
     audio = EasyID3(trackname)
 
-    ctx.set_source_rgb(0.0, 0.0, 0.0)
-    ctx.select_font_face("Georgia",cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(Settings.programSettings.textSize)
+    cr.set_source_rgb(0.0, 0.0, 0.0)
+    cr.select_font_face("Georgia",cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    cr.set_font_size(Settings.programSettings.textSize)
 
     if 'title' in audio:
         title = audio['title'][0]
-        ctx.move_to(0.05,(0.01+Settings.programSettings.textVerticalOffset)*tracknumber+Settings.programSettings.textVerticalPos)
-        ctx.show_text(title)
+        cr.move_to(0.05,(0.01+Settings.programSettings.textVerticalOffset)*tracknumber+Settings.programSettings.textVerticalPos)
+        cr.show_text(title)
 
-    ctx.set_source_rgb(Settings.programSettings.textBPMColor[0], Settings.programSettings.textBPMColor[1], Settings.programSettings.textBPMColor[2])
-    oldpos = ctx.get_current_point()
-    ctx.move_to(Settings.programSettings.cover.SizeOfLongestTitle()*Settings.programSettings.textSize-0.8, oldpos[1])
+    cr.set_source_rgb(Settings.programSettings.textBPMColor[0], Settings.programSettings.textBPMColor[1], Settings.programSettings.textBPMColor[2])
+    oldpos = cr.get_current_point()
+    cr.move_to(Settings.programSettings.cover.SizeOfLongestTitle()*Settings.programSettings.textSize-0.8, oldpos[1])
     if 'BPM' in audio:
-        ctx.show_text(audio['BPM'][0])
+        cr.show_text(audio['BPM'][0])
 
+#Run through the list of file, and call displayTrack for each one of them. Then render the cairo context to png and clear the fileList
 def generateCover():
     global ctx, surface
     i=1
@@ -55,12 +61,15 @@ def generateCover():
     surface.write_to_png ("example.png")
     Settings.programSettings.cover.fileList.clear()
 
+#Ask the user for the path to a file, and add it to the fileList stored in a settings object
 def getPathFile() :
     temp = []
     temp.append(filedialog.askopenfilename())
     Settings.programSettings.cover.fileList = temp
     print(Settings.programSettings.cover.fileList)
 
+#This function does 2 things : 1) it ask the user for a path, and look for every mp3 file in it and store the path to each one of them in a settings object
+#                              2) given a path to a directory in argument, it does the same thing as 1) but using the path given as argument instead of asking the user for a path
 def getPathDir(**kwargs) :
     if len(kwargs)>=1:
         for key, value in kwargs.items():
@@ -81,13 +90,16 @@ def getPathDir(**kwargs) :
                 pathList = sorted(pathList)
     Settings.programSettings.cover.fileList = pathList
 
+#Regenerate the ini before quitting the python script
 def saveSettingsAndQuit():
     Settings.programSettings.regenerateIni()
     sys.exit(0)
 
+#Simply quit the python script
 def  quitWithoutSaving():
     sys.exit(0)
 
+#A dialog that open on clicking on the "quit" button wich will ask the user if he want or not to the save his settings
 def quitDialog():
         window = tkinter.Toplevel()
         dialog = tkinter.Label(window, text="Save settings before quitting ?")
@@ -97,11 +109,7 @@ def quitDialog():
         no = tkinter.Button(window, text="No", command=quitWithoutSaving)
         no.pack()
 
-#audio['title'] = u"Example Title"
-#audio['artist'] = u"Me"
-#audio['album'] = u"My album"
-#audio['composer'] = u"" # clear
-#audio.save()
+# --------- Cairo stuff --------- #
 
 width = 1024
 height = 1024

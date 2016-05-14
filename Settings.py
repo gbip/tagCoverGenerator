@@ -15,13 +15,22 @@ You should have received a copy of the GNU General Public License along with Mp3
 '''
 
 import json,os
+
+# --------- Settings class --------- #
+#A class representing the variable needed for the program to run. It his not really properly nammed (it contains other thing that just pure settings parameters).
 class settings:
     def __init__(self):
+        #the size of the text that will be displayed upon drawing the cover
         self._textSize = 0.015
+        #the color of the BPM field
         self._textBPMColor = (0.8, 0.4, 0.2)
+        #the position of the first line
         self._textVerticalPos = 0.2
+        #the offset between 2 lines
         self._textVerticalOffset = 0.05
+        #the absolute path to a configuration file
         self.__configurationFile = os.path.dirname(__file__) + "/settings.ini"
+        #a cover object (see the class cover)
         self._cover = cover()
 
     @property
@@ -56,12 +65,14 @@ class settings:
     def cover(self, newCover):
         self._cover = newCover
 
+    #Creat an empty .ini file
     def createIniFile(self):
         execDirPath = os.path.dirname(__file__)
         print(self.__configurationFile)
         ini = open(self.__configurationFile, mode='a')
         ini.close()
 
+    #Dump all the settings to an ini file in the form of a Json Object
     def regenerateIni(self):
             with open(self.__configurationFile, mode='w') as iniFile:
                 json.dump({"color": cairoColorToTkColor(self._textBPMColor),
@@ -70,6 +81,7 @@ class settings:
 
             print("Saved settings to" + self.__configurationFile)
 
+    #Look at the ini file and assign value to the settings object based on what is in the Json Object
     def parseIniFile(self):
         self.createIniFile()
         if os.stat(self.__configurationFile).st_size > 0:
@@ -86,19 +98,23 @@ class settings:
 
 
 
-
+#Convert color from cairo(value between 0 and 1) to Tk values (value between 0 and 255)
 def cairoColorToTkColor(color):
     result = []
     for i in color : result.append(int(i*255))
     return tuple(result)
 
+#Does the opposite of cairoColorToTkcolor(color)
 def TkColorToCairoColor(color):
     result = []
     for i in color : result.append(i/255)
     return tuple(result)
 
+# --------- Cover class --------- #
+#a classe representing all the data needed to create a cover
 class cover:
     def __init__(self):
+        #A list of absolute path to the file that will be used to draw the cover
         self._fileList = []
 
     @property
@@ -109,18 +125,15 @@ class cover:
     def fileList(self, value):
         self._fileList = value
 
+    #Return the size of the longuest title
     def SizeOfLongestTitle(self):
         bestScore = 0
         for title in self.fileList:
             if len(title) > bestScore:
                 bestScore = len(title)
         return bestScore
-    def getWorkingData(self):
-        prout = ["erer", "jeiv"]
-        if len(self.fileList) != 1:
-            return prout[0].rpartition("/")[0]
-        else:
-            return self.fileList[0]
+
+    #Create a Json object from the cover object
     def toJson(self):
         return json.dump({"fileList": self._fileList})
 
