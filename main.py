@@ -25,133 +25,134 @@ parser.add_argument('--sort', '-s', help="Choose a sorting option, default: by a
 
 # --------- Function declaration --------- #
 
-#Ask the user for a color and store it in a Settings object
-def pickBPMColor():
-    RGBColor = tkColorChooser.colorchooser.askcolor(Settings.cairoColorToTkColor(Settings.programSettings.textBPMColor))
-    if RGBColor[0]:
-        Settings.programSettings.textBPMColor = ([RGBColor[0][0]/255, RGBColor[0][1]/255, RGBColor[0][2]/255])
-
-#Add a track to the cairo context matchin the specified user input stored in a Settings object
-def displayTrack(cr, trackname, tracknumber):
-    audio = EasyID3(trackname)
-
-    cr.set_source_rgb(0.0, 0.0, 0.0)
-    cr.select_font_face("Georgia",cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    cr.set_font_size(Settings.programSettings.textSize)
-
-    if 'title' in audio:
-        title = audio['title'][0]
-        cr.move_to(0.05,(0.01+Settings.programSettings.textVerticalOffset)*tracknumber+Settings.programSettings.textVerticalPos)
-        cr.show_text(title)
-
-    cr.set_source_rgb(Settings.programSettings.textBPMColor[0], Settings.programSettings.textBPMColor[1], Settings.programSettings.textBPMColor[2])
-    oldpos = cr.get_current_point()
-    cr.move_to(Settings.programSettings.cover.SizeOfLongestTitle()*Settings.programSettings.textSize-0.8, oldpos[1])
-    if 'BPM' in audio:
-        cr.show_text(audio['BPM'][0])
-
-#Run through the list of file, and call displayTrack for each one of them. Then render the cairo context to png and clear the fileList
-def generateCover():
-    global ctx, surface
-    i=1
-    for file in Settings.programSettings.cover.fileList:
-        displayTrack(ctx, file, i)
-        i += 1
-    surface.write_to_png ("example.png")
-    Settings.programSettings.cover.fileList.clear()
-
-#Ask the user for the path to a file, and add it to the fileList stored in a settings object
-def getPathFile() :
-    temp = []
-    temp.append(tkFileDialog.askopenfilename())
-    Settings.programSettings.cover.fileList = temp
-    print(Settings.programSettings.cover.fileList)
-
-#This function does 2 things : 1) it ask the user for a path, and look for every mp3 file in it and store the path to each one of them in a settings object
-#                              2) given a path to a directory in argument, it does the same thing as 1) but using the path given as argument instead of asking the user for a path
-def getPathDir(**kwargs) :
-    if len(kwargs)>=1:
-        for key, value in kwargs.items():
-            if key == 'dir':
-                relevant_path = value
-            else :
-                raise SyntaxError("Expected a directory")
-    else:
-        relevant_path = tkFileDialog.askdirectory()
-
-    print(relevant_path)
-    pathList = []
-    if relevant_path:
-        included_extenstions = ['mp3']
-        for fn in os.listdir(relevant_path):
-            if any(fn.endswith(ext) for ext in included_extenstions):
-                pathList.append(relevant_path +"/"+ fn)
-                pathList = sorted(pathList)
-    Settings.programSettings.cover.fileList = pathList
-
-#Regenerate the ini before quitting the python script
-def saveSettingsAndQuit():
-    Settings.programSettings.regenerateIni()
-    sys.exit(0)
-
-#Simply quit the python script
-def  quitWithoutSaving():
-    sys.exit(0)
-
-#A dialog that open on clicking on the "quit" button wich will ask the user if he want or not to the save his settings
-def exitDialog():
-        window = Tkinter.Toplevel()
-        dialog = Tkinter.Label(window, text="Save settings before quitting ?")
-        dialog.pack()
-        yes = Tkinter.Button(window, text="Yes", command=saveSettingsAndQuit)
-        yes.pack()
-        no = Tkinter.Button(window, text="No", command=quitWithoutSaving)
-        no.pack()
-
 # --------- Cairo stuff --------- #
 
-width = 1024
-height = 1024
-surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-
-ctx = cairo.Context(surface)
-ctx.scale(width, height) # Normalizing the canvas
-ctx.set_source_rgb(0.98,0.98,0.98)
-ctx.paint()
-
-
 class Application :
-    def __init__(self):
-        self._settings = Settings
+    def __init__(self, width, height):
+        self._settings = Settings.settings()
         self._tkTopLevel = Tkinter.Tk()
         self._widgetList = []
+        self._cairoSurface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        self._ctx = cairo.Context(self._cairoSurface)
+        self._width = width
+        self._height = height
 
     def loop(self):
         self._tkTopLevel.mainloop()
 
+    def pickBPMColor(self):
+        RGBColor = tkColorChooser.askcolor(
+            Settings.cairoColorToTkColor(self._settings.textBPMColor))
+        if RGBColor[0]:
+            self._settings.textBPMColor = (
+                [RGBColor[0][0] / 255, RGBColor[0][1] / 255, RGBColor[0][2] / 255])
+
+    # Add a track to the cairo context matchin the specified user input stored in a Settings object
+    def displayTrack(self, trackname, tracknumber):
+        audio = EasyID3(trackname)
+
+        self._ctx.set_source_rgb(0.0, 0.0, 0.0)
+        self._ctx.select_font_face("Georgia", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        self._ctx.set_font_size(self._settings.textSize)
+
+        if 'title' in audio:
+            title = audio['title'][0]
+            self._ctx.move_to(0.05, (
+                0.01 + self._settings.textVerticalOffset) * tracknumber + self._settings.textVerticalPos)
+            self._ctx.show_text(title)
+
+            self._ctx.set_source_rgb(self._settings.textBPMColor[0], self._settings.textBPMColor[1],
+                          self._settings.textBPMColor[2])
+        oldpos = self._ctx.get_current_point()
+        self._ctx.move_to(self._settings.cover.SizeOfLongestTitle() * self._settings.textSize - 0.8,
+                   oldpos[1])
+        if 'BPM' in audio:
+            self._ctx.show_text(audio['BPM'][0])
+
+    # Run through the list of file, and call displayTrack for each one of them. Then render the cairo context to png and clear the fileList
+    def generateCover(self):
+        i = 1
+        for file in self._settings.cover.fileList:
+            self.displayTrack(file, i)
+            i += 1
+        self._cairoSurface.write_to_png("example.png")
+        self._settings.cover.fileList = []
+
+    # Ask the user for the path to a file, and add it to the fileList stored in a settings object
+    def getPathFile(self):
+        temp = []
+        temp.append(tkFileDialog.askopenfilename())
+        self._settings.cover.fileList = temp
+        print(self._settings.cover.fileList)
+
+    # This function does 2 things : 1) it ask the user for a path, and look for every mp3 file in it and store the path to each one of them in a settings object
+    #                              2) given a path to a directory in argument, it does the same thing as 1) but using the path given as argument instead of asking the user for a path
+    def getPathDir(self,**kwargs):
+        if len(kwargs) >= 1:
+            for key, value in kwargs.items():
+                if key == 'dir':
+                    relevant_path = value
+                else:
+                    raise SyntaxError("Expected a directory")
+        else:
+            relevant_path = tkFileDialog.askdirectory()
+
+        print(relevant_path)
+        pathList = []
+        if relevant_path:
+            included_extenstions = ['mp3']
+            for fn in os.listdir(relevant_path):
+                if any(fn.endswith(ext) for ext in included_extenstions):
+                    pathList.append(relevant_path + "/" + fn)
+                    pathList = sorted(pathList)
+        self._settings.cover.fileList = pathList
+
+    # Regenerate the ini before quitting the python script
+    def saveSettingsAndQuit(self):
+        self._settings.regenerateIni()
+        sys.exit(0)
+
+    # Simply quit the python script
+    def quitWithoutSaving(self):
+        sys.exit(0)
+
+    # A dialog that open on clicking on the "quit" button wich will ask the user if he want or not to the save his settings
+    def exitDialog(self):
+        window = Tkinter.Toplevel()
+        dialog = Tkinter.Label(window, text="Save settings before quitting ?")
+        dialog.pack()
+        yes = Tkinter.Button(window, text="Yes", command=self.saveSettingsAndQuit)
+        yes.pack()
+        no = Tkinter.Button(window, text="No", command=self.quitWithoutSaving)
+        no.pack()
+
     def initWidgets(self):
-        self._settings.programSettings.parseIniFile()
+        self._ctx.scale(self._width, self._height)
+        self._ctx.set_source_rgb(0.98,0.98,0.98)
+        self._ctx.paint()
+
+        self._settings.createIniFile()
         self._tkTopLevel.resizable(width=False, height=False)
         self._tkTopLevel.winfo_height()
         self._tkTopLevel.wm_title(string="CoverGenerator 0.1")
         self._tkTopLevel.wm_minsize(500, 500)
         # The "Generate Cover" button. It calls the generateCover function on click
-        run = Tkinter.Button(self._tkTopLevel, text="Generate Cover", command=generateCover)
+        run = Tkinter.Button(self._tkTopLevel, text="Generate Cover", command=self.generateCover)
         run.pack()
 
-        browseFile = Tkinter.Button(self._tkTopLevel, text="Browse a file", command=getPathFile)
+        browseFile = Tkinter.Button(self._tkTopLevel, text="Browse a file", command=self.getPathFile)
         browseFile.pack()
 
-        browseDir = Tkinter.Button(self._tkTopLevel, text="Browse a directory", command=getPathDir)
+        browseDir = Tkinter.Button(self._tkTopLevel, text="Browse a directory", command=self.getPathDir)
         browseDir.pack()
 
-        pickColor = Tkinter.Button(self._tkTopLevel, text="Pick a color for the BPM", command=pickBPMColor)
+        pickColor = Tkinter.Button(self._tkTopLevel, text="Pick a color for the BPM", command=self.pickBPMColor)
         pickColor.pack()
 
         # saveSettings = tkinter.Button(self._tkTopLevel, text="Save settings", command=saveSettings)
         # saveSettings.pack()
 
-        quitDialog = Tkinter.Button(self._tkTopLevel, text="Quit", command=exitDialog)
+        quitDialog = Tkinter.Button(self._tkTopLevel, text="Quit", command=self.exitDialog)
         quitDialog.pack()
 
         orderList = Tkinter.Listbox(self._tkTopLevel)
@@ -160,11 +161,14 @@ class Application :
         self._widgetList = [run, browseFile, browseDir, quitDialog, orderList]
 
 
+
+
 # --------- GUI --------- #
 
 #Setting up the main program frame
 
 args = parser.parse_args()
+'''
 if len(sys.argv)>1:
     if args.file is not None:
         print("je passe")
@@ -185,6 +189,7 @@ if len(sys.argv)>1:
             raise FileNotFoundError("Invalid directory specified")
     generateCover()
 else:
-    app = Application()
-    app.initWidgets()
-    app.loop()
+'''
+app = Application(1024, 1024)
+app.initWidgets()
+app.loop()
