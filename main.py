@@ -13,8 +13,7 @@ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the GNU Gene
 You should have received a copy of the GNU General Public License along with Mp3CoverGenerator. If not, see < http://
     www.gnu.org / licenses / >.2
 '''
-import os, tkinter, json, Settings, cairo, argparse, sys
-from tkinter import filedialog, colorchooser
+import os, Tkinter, json, Settings, cairo, argparse, sys, tkFileDialog, tkColorChooser
 from mutagen.easyid3 import EasyID3
 
 # --------- Argument parser --------- #
@@ -28,7 +27,7 @@ parser.add_argument('--sort', '-s', help="Choose a sorting option, default: by a
 
 #Ask the user for a color and store it in a Settings object
 def pickBPMColor():
-    RGBColor = tkinter.colorchooser.askcolor(Settings.cairoColorToTkColor(Settings.programSettings.textBPMColor))
+    RGBColor = tkColorChooser.colorchooser.askcolor(Settings.cairoColorToTkColor(Settings.programSettings.textBPMColor))
     if RGBColor[0]:
         Settings.programSettings.textBPMColor = ([RGBColor[0][0]/255, RGBColor[0][1]/255, RGBColor[0][2]/255])
 
@@ -64,7 +63,7 @@ def generateCover():
 #Ask the user for the path to a file, and add it to the fileList stored in a settings object
 def getPathFile() :
     temp = []
-    temp.append(filedialog.askopenfilename())
+    temp.append(tkFileDialog.askopenfilename())
     Settings.programSettings.cover.fileList = temp
     print(Settings.programSettings.cover.fileList)
 
@@ -78,7 +77,7 @@ def getPathDir(**kwargs) :
             else :
                 raise SyntaxError("Expected a directory")
     else:
-        relevant_path = filedialog.askdirectory()
+        relevant_path = tkFileDialog.askdirectory()
 
     print(relevant_path)
     pathList = []
@@ -100,13 +99,13 @@ def  quitWithoutSaving():
     sys.exit(0)
 
 #A dialog that open on clicking on the "quit" button wich will ask the user if he want or not to the save his settings
-def quitDialog():
-        window = tkinter.Toplevel()
-        dialog = tkinter.Label(window, text="Save settings before quitting ?")
+def exitDialog():
+        window = Tkinter.Toplevel()
+        dialog = Tkinter.Label(window, text="Save settings before quitting ?")
         dialog.pack()
-        yes = tkinter.Button(window, text="Yes", command=saveSettingsAndQuit)
+        yes = Tkinter.Button(window, text="Yes", command=saveSettingsAndQuit)
         yes.pack()
-        no = tkinter.Button(window, text="No", command=quitWithoutSaving)
+        no = Tkinter.Button(window, text="No", command=quitWithoutSaving)
         no.pack()
 
 # --------- Cairo stuff --------- #
@@ -119,6 +118,47 @@ ctx = cairo.Context(surface)
 ctx.scale(width, height) # Normalizing the canvas
 ctx.set_source_rgb(0.98,0.98,0.98)
 ctx.paint()
+
+
+class Application :
+    def __init__(self):
+        self._settings = Settings
+        self._tkTopLevel = Tkinter.Tk()
+        self._widgetList = []
+
+    def loop(self):
+        self._tkTopLevel.mainloop()
+
+    def initWidgets(self):
+        self._settings.programSettings.parseIniFile()
+        self._tkTopLevel.resizable(width=False, height=False)
+        self._tkTopLevel.winfo_height()
+        self._tkTopLevel.wm_title(string="CoverGenerator 0.1")
+        self._tkTopLevel.wm_minsize(500, 500)
+        # The "Generate Cover" button. It calls the generateCover function on click
+        run = Tkinter.Button(self._tkTopLevel, text="Generate Cover", command=generateCover)
+        run.pack()
+
+        browseFile = Tkinter.Button(self._tkTopLevel, text="Browse a file", command=getPathFile)
+        browseFile.pack()
+
+        browseDir = Tkinter.Button(self._tkTopLevel, text="Browse a directory", command=getPathDir)
+        browseDir.pack()
+
+        pickColor = Tkinter.Button(self._tkTopLevel, text="Pick a color for the BPM", command=pickBPMColor)
+        pickColor.pack()
+
+        # saveSettings = tkinter.Button(self._tkTopLevel, text="Save settings", command=saveSettings)
+        # saveSettings.pack()
+
+        quitDialog = Tkinter.Button(self._tkTopLevel, text="Quit", command=exitDialog)
+        quitDialog.pack()
+
+        orderList = Tkinter.Listbox(self._tkTopLevel)
+        orderList.pack()
+
+        self._widgetList = [run, browseFile, browseDir, quitDialog, orderList]
+
 
 # --------- GUI --------- #
 
@@ -145,30 +185,6 @@ if len(sys.argv)>1:
             raise FileNotFoundError("Invalid directory specified")
     generateCover()
 else:
-    Settings.programSettings.parseIniFile()
-    top = tkinter.Tk()
-    top.resizable(width=False, height=False)
-    top.winfo_height()
-    top.wm_title(string="CoverGenerator 0.1")
-    top.wm_minsize(500,500)
-
-    #The "Generate Cover" button. It calls the generateCover function on click
-    run = tkinter.Button(top,text = "Generate Cover", command = generateCover)
-    run.pack()
-
-    browseFile = tkinter.Button(top, text = "Browse a file", command = getPathFile)
-    browseFile.pack()
-
-    browseDir = tkinter.Button(top, text = "Browse a directory", command = getPathDir)
-    browseDir.pack()
-
-    pickColor = tkinter.Button(top, text = "Pick a color for the BPM", command=pickBPMColor)
-    pickColor.pack()
-
-    #saveSettings = tkinter.Button(top, text="Save settings", command=saveSettings)
-    #saveSettings.pack()
-
-    quitDialog = tkinter.Button(top, text="Quit", command=quitDialog)
-    quitDialog.pack()
-
-    top.mainloop()
+    app = Application()
+    app.initWidgets()
+    app.loop()
