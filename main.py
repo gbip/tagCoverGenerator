@@ -138,11 +138,13 @@ class Application :
     def exitDialog(self):
         window = Tkinter.Toplevel()
         dialog = Tkinter.Label(window, text="Save settings before quitting ?")
+        window.wm_minsize(400,100)
+        window.resizable(width=False, height=False)
         dialog.pack()
         yes = Tkinter.Button(window, text="Yes", command=self.saveSettingsAndQuit)
-        yes.pack()
+        yes.place(height=40, relwidth=0.4, relx=0.25, rely=0.8, anchor="center")
         no = Tkinter.Button(window, text="No", command=self.quitWithoutSaving)
-        no.pack()
+        no.place(height=40, relwidth=0.4, relx=0.75, rely=0.8, anchor="center")
 
     def moveUp(self):
         selected = self._widgetList[-1].curselection()
@@ -164,6 +166,7 @@ class Application :
         self._widgetList.append(listBox)
 
     def initWidgets(self):
+        #initialize all the cairo stuff
         self._ctx.scale(self._width, self._height)
         self._ctx.set_source_rgb(0.98,0.98,0.98)
         self._ctx.paint()

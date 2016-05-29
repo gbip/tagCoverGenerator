@@ -29,7 +29,7 @@ class settings:
         #the offset between 2 lines
         self._textVerticalOffset = 0.05
         #the absolute path to a configuration file
-        self.__configurationFile = os.path.dirname(__file__) + "/settings.ini"
+        self.__configurationFile = os.path.dirname(__file__) + "/settings.json"
         #a cover object (see the class cover)
         self._cover = cover()
 
@@ -65,7 +65,7 @@ class settings:
     def cover(self, newCover):
         self._cover = newCover
 
-    #Creat an empty .ini file
+    #Creat an empty .json file
     def createIniFile(self):
         execDirPath = os.path.dirname(__file__)
         print(self.__configurationFile)
