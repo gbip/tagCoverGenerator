@@ -162,37 +162,39 @@ class Application :
         self._tkTopLevel.wm_minsize(500, 500)
 
         self._settings.parseIniFile()
+
         # The "Generate Cover" button. It calls the generateCover function on click
         run = Tkinter.Button(self._tkTopLevel, text="Generate Cover", command=self.generateCover)
-        run.pack()
+        run.place(relwidth=0.6, relheight=0.15, relx=0.5, rely=0.92, anchor="center")
         self._widgetList.append(run)
 
 
-        browseFile = Tkinter.Button(self._tkTopLevel, text="Browse a file", command=self.getPathFile)
-        browseFile.pack()
+        browseFile = Tkinter.Button(self._tkTopLevel, text="Browse a file", command=self.getPathFile, )
+        browseFile.place(relx=0.15, rely=0.05, relwidth=0.3, relheight=0.1, anchor="center")
         self._widgetList.append(browseFile)
 
         browseDir = Tkinter.Button(self._tkTopLevel, text="Browse a directory", command=self.getPathDir)
-        browseDir.pack()
+        browseDir.place(relx=0.45, rely=0.05, relwidth=0.3, relheight=0.1, anchor="center")
         self._widgetList.append(browseDir)
 
         pickColor = Tkinter.Button(self._tkTopLevel, text="Pick a color for the BPM", command=self.pickBPMColor)
-        pickColor.pack()
+        pickColor.place(relx=0.8, rely=0.05, relwidth=0.4, relheight=0.1, anchor="center")
         self._widgetList.append(pickColor)
 
         # saveSettings = tkinter.Button(self._tkTopLevel, text="Save settings", command=saveSettings)
         # saveSettings.pack()
 
         quitDialog = Tkinter.Button(self._tkTopLevel, text="Quit", command=self.exitDialog)
-        quitDialog.pack()
+        quitDialog.place(relwidth=0.2, relheight=0.15, relx=0.9, rely=0.92, anchor="center")
         self._widgetList.append(quitDialog)
 
         moveUp = Tkinter.Button(self._tkTopLevel, text="Up", command=self.moveUp)
-        moveUp.pack()
+        moveUp.place(relx=0.6, rely=0.6,anchor="n")
         self._widgetList.append(moveUp)
 
         moveDown = Tkinter.Button(self._tkTopLevel, text="Down", command=self.moveDown)
-        moveDown.pack()
+        moveDown.place(relx=0.3, rely=0.6,anchor="n"
+                       )
         self._widgetList.append(moveDown)
 
         #This should be the last item in the list ALWAYS
@@ -200,7 +202,7 @@ class Application :
         for index, track in enumerate(self._settings.cover.titleList):
             orderList.insert(index, track)
             print(track)
-        orderList.pack()
+        orderList.place(relx=0.5, rely=0.4,relwidth=0.9, anchor="center" )
         self._widgetList.append(orderList)
 
 # --------- GUI --------- #
