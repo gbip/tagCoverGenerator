@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License along with Mp3
 '''
 import os, Tkinter, json, Settings, cairo, argparse, sys, tkFileDialog, tkColorChooser
 from mutagen.easyid3 import EasyID3
+from mutagen.flac import FLAC
 
 # --------- Argument parser --------- #
 
@@ -50,7 +51,12 @@ class Application :
 
     # Add a track to the cairo context matchin the specified user input stored in a Settings object
     def displayTrack(self, trackname, tracknumber):
-        audio = EasyID3(trackname)
+
+        if trackname.rsplit(".")[-1] == "mp3":
+            audio = EasyID3(trackname)
+        else:
+            if trackname.rsplit(".")[-1] == "flac":
+                audio = FLAC(trackname)
 
         self._ctx.set_source_rgb(0.0, 0.0, 0.0)
         self._ctx.select_font_face("Georgia", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
@@ -102,7 +108,7 @@ class Application :
         pathList = []
         titleList = []
         if relevant_path:
-            included_extenstions = ['mp3']
+            included_extenstions = ['mp3', 'flac']
             for fn in os.listdir(relevant_path):
                 if any(fn.endswith(ext) for ext in included_extenstions):
                     pathList.append(relevant_path + "/" + fn)
