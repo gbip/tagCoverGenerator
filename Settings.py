@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License along with Mp3
 '''
 
 import json,os
+from Tkinter import IntVar
 
 # --------- Settings class --------- #
 #A class representing the variable needed for the program to run. It his not really properly nammed (it contains other thing that just pure settings parameters).
@@ -32,6 +33,8 @@ class settings:
         self.__configurationFile = os.path.dirname(__file__) + "/settings.json"
         #a cover object (see the class cover)
         self._cover = cover()
+        #should display the artist ?
+        self._displayArtist = False
 
     @property
     def textBPMColor(self):
@@ -48,6 +51,9 @@ class settings:
     @property
     def cover(self):
         return self._cover
+    @property
+    def displayArtist(self):
+        return self._displayArtist
 
     @textBPMColor.setter
     def textBPMColor(self, color):
@@ -64,6 +70,9 @@ class settings:
     @cover.setter
     def cover(self, newCover):
         self._cover = newCover
+    @displayArtist.setter
+    def displayArtist(self, value):
+        self._displayArtist = value
 
     #Creat an empty .json file
     def createIniFile(self):
@@ -77,8 +86,8 @@ class settings:
             with open(self.__configurationFile, mode='w') as iniFile:
                 json.dump({"color": cairoColorToTkColor(self._textBPMColor),
                            "text size": self._textSize,
-                           "fileList":self._cover.fileList}, iniFile)
-
+                           "fileList":self._cover.fileList,
+                           "displayArtist": self._displayArtist}, iniFile)
             print("Saved settings to" + self.__configurationFile)
 
     #Look at the ini file and assign value to the settings object based on what is in the Json Object
@@ -92,6 +101,7 @@ class settings:
                     self._textBPMColor = TkColorToCairoColor(jsonSettings["color"])
                     self._textSize = jsonSettings["text size"]
                     self.updateList(jsonSettings["fileList"])
+                    self._displayArtist = jsonSettings["displayArtist"]
         else:
             print("No configuration file found, generating a new one for you.")
             self.regenerateIni()

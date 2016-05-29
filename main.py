@@ -44,10 +44,10 @@ class Application :
     @settings.setter
     def settings(self, value):
         self._settings = value
-
+    #The main Tkinter llop
     def loop(self):
         self._tkTopLevel.mainloop()
-
+    #Ask the user for a color and store so that it could be used as the drawn color for the BPM
     def pickBPMColor(self):
         RGBColor = tkColorChooser.askcolor(
             Settings.cairoColorToTkColor(self._settings.textBPMColor))
@@ -57,7 +57,6 @@ class Application :
 
     # Add a track to the cairo context matchin the specified user input stored in a Settings object
     def displayTrack(self, trackname, tracknumber):
-
         if trackname.rsplit(".")[-1] == "mp3":
             audio = EasyID3(trackname)
         else:
@@ -70,15 +69,20 @@ class Application :
 
         if 'title' in audio:
             title = audio['title'][0]
-            self._ctx.move_to(0.05, (
-                0.01 + self._settings.textVerticalOffset) * tracknumber + self._settings.textVerticalPos)
+            self._ctx.move_to(0.05, (0.01 + self._settings.textVerticalOffset) * tracknumber + self._settings.textVerticalPos)
             self._ctx.show_text(title)
 
             self._ctx.set_source_rgb(self._settings.textBPMColor[0], self._settings.textBPMColor[1],
                           self._settings.textBPMColor[2])
         oldpos = self._ctx.get_current_point()
-        self._ctx.move_to(self._settings.cover.SizeOfLongestTitle() * self._settings.textSize - 0.8,
-                   oldpos[1])
+
+        if self._settings.displayArtist and 'artist' in audio:
+            artist = audio['artist'][0]
+            self._ctx.move_to(self._settings.cover.SizeOfLongestTitle() * self._settings.textSize - 0.9, oldpos[1])
+            self._ctx.show_text(artist)
+
+        oldpos = self._ctx.get_current_point()
+        self._ctx.move_to(oldpos[0] +0.1, oldpos[1])
         if 'BPM' in audio:
             self._ctx.show_text(audio['BPM'][0])
 
@@ -91,6 +95,7 @@ class Application :
             i += 1
         self._cairoSurface.write_to_png("example.png")
         self._settings.cover.fileList = []
+        print("Generated new cover")
 
     # Ask the user for the path to a file, and add it to the fileList stored in a settings object
     def getPathFile(self):
@@ -101,7 +106,7 @@ class Application :
         self.updateOrderList()
 
     # This function does 2 things : 1) it ask the user for a path, and look for every mp3 file in it and store the path to each one of them in a settings object
-    #                              2) given a path to a directory in argument, it does the same thing as 1) but using the path given as argument instead of asking the user for a path
+    #                               2) given a path to a directory in argument, it does the same thing as 1) but using the path given as argument instead of asking the user for a path
     def getPathDir(self,**kwargs):
         if len(kwargs) >= 1:
             for key, value in kwargs.items():
@@ -157,6 +162,8 @@ class Application :
         if selected > 1:
             self._settings.cover.permuteTitle(selected[0] + 1, selected[0])
         self.updateOrderList()
+        bleuh = self._settings.displayArtist
+        print(bleuh)
 
     def updateOrderList(self):
         listBox = self._widgetList.pop()
@@ -164,6 +171,9 @@ class Application :
             listBox.delete(index)
             listBox.insert(index, track)
         self._widgetList.append(listBox)
+
+    def changeDisplayArtist(self):
+        self._settings._displayArtist = (not self._settings.displayArtist)
 
     def initWidgets(self):
         #initialize all the cairo stuff
@@ -213,6 +223,9 @@ class Application :
                        )
         self._widgetList.append(moveDown)
 
+        displayArtist = Tkinter.Checkbutton(self._tkTopLevel, text="Display artist", command=self.changeDisplayArtist)
+        displayArtist.place(relx = 0.2, rely=0.8)
+
         #This should be the last item in the list ALWAYS
         orderList = Tkinter.Listbox(self._tkTopLevel, selectmode = "Browse", width=30)
         for index, track in enumerate(self._settings.cover.titleList):
@@ -220,6 +233,9 @@ class Application :
             print(track)
         orderList.place(relx=0.5, rely=0.4,relwidth=0.9, anchor="center" )
         self._widgetList.append(orderList)
+
+        if self._settings.displayArtist:
+            displayArtist.select()
 
 # --------- GUI --------- #
 
