@@ -31,11 +31,12 @@ class Application :
     def __init__(self, width, height):
         self._settings = Settings.settings()
         self._tkTopLevel = Tkinter.Tk()
-        self._widgetList = []
+        self._widgetList = list()
         self._cairoSurface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         self._ctx = cairo.Context(self._cairoSurface)
         self._width = width
         self._height = height
+        self._redrawList = True
 
     def loop(self):
         self._tkTopLevel.mainloop()
@@ -84,6 +85,7 @@ class Application :
         temp.append(tkFileDialog.askopenfilename())
         self._settings.cover.fileList = temp
         print(self._settings.cover.fileList)
+        self.updateOrderList()
 
     # This function does 2 things : 1) it ask the user for a path, and look for every mp3 file in it and store the path to each one of them in a settings object
     #                              2) given a path to a directory in argument, it does the same thing as 1) but using the path given as argument instead of asking the user for a path
@@ -96,16 +98,19 @@ class Application :
                     raise SyntaxError("Expected a directory")
         else:
             relevant_path = tkFileDialog.askdirectory()
-
         print(relevant_path)
         pathList = []
+        titleList = []
         if relevant_path:
             included_extenstions = ['mp3']
             for fn in os.listdir(relevant_path):
                 if any(fn.endswith(ext) for ext in included_extenstions):
                     pathList.append(relevant_path + "/" + fn)
                     pathList = sorted(pathList)
-        self._settings.cover.fileList = pathList
+                    titleList.append(fn)
+        self._settings.updateList(pathList)
+        self.updateOrderList()
+
 
     # Regenerate the ini before quitting the python script
     def saveSettingsAndQuit(self):
@@ -126,6 +131,25 @@ class Application :
         no = Tkinter.Button(window, text="No", command=self.quitWithoutSaving)
         no.pack()
 
+    def moveUp(self):
+        selected = self._widgetList[-1].curselection()
+        if selected > 1:
+            self._settings.cover.permuteTitle(selected[0]-1, selected[0])
+        self.updateOrderList()
+
+    def moveDown(self):
+        selected = self._widgetList[-1].curselection()
+        if selected > 1:
+            self._settings.cover.permuteTitle(selected[0] + 1, selected[0])
+        self.updateOrderList()
+
+    def updateOrderList(self):
+        listBox = self._widgetList.pop()
+        for index, track in enumerate(self._settings.cover.titleList):
+            listBox.delete(index)
+            listBox.insert(index, track)
+        self._widgetList.append(listBox)
+
     def initWidgets(self):
         self._ctx.scale(self._width, self._height)
         self._ctx.set_source_rgb(0.98,0.98,0.98)
@@ -136,32 +160,48 @@ class Application :
         self._tkTopLevel.winfo_height()
         self._tkTopLevel.wm_title(string="CoverGenerator 0.1")
         self._tkTopLevel.wm_minsize(500, 500)
+
+        self._settings.parseIniFile()
         # The "Generate Cover" button. It calls the generateCover function on click
         run = Tkinter.Button(self._tkTopLevel, text="Generate Cover", command=self.generateCover)
         run.pack()
+        self._widgetList.append(run)
+
 
         browseFile = Tkinter.Button(self._tkTopLevel, text="Browse a file", command=self.getPathFile)
         browseFile.pack()
+        self._widgetList.append(browseFile)
 
         browseDir = Tkinter.Button(self._tkTopLevel, text="Browse a directory", command=self.getPathDir)
         browseDir.pack()
+        self._widgetList.append(browseDir)
 
         pickColor = Tkinter.Button(self._tkTopLevel, text="Pick a color for the BPM", command=self.pickBPMColor)
         pickColor.pack()
+        self._widgetList.append(pickColor)
 
         # saveSettings = tkinter.Button(self._tkTopLevel, text="Save settings", command=saveSettings)
         # saveSettings.pack()
 
         quitDialog = Tkinter.Button(self._tkTopLevel, text="Quit", command=self.exitDialog)
         quitDialog.pack()
+        self._widgetList.append(quitDialog)
 
-        orderList = Tkinter.Listbox(self._tkTopLevel)
+        moveUp = Tkinter.Button(self._tkTopLevel, text="Up", command=self.moveUp)
+        moveUp.pack()
+        self._widgetList.append(moveUp)
+
+        moveDown = Tkinter.Button(self._tkTopLevel, text="Down", command=self.moveDown)
+        moveDown.pack()
+        self._widgetList.append(moveDown)
+
+        #This should be the last item in the list ALWAYS
+        orderList = Tkinter.Listbox(self._tkTopLevel, selectmode = "Browse", width=30)
+        for index, track in enumerate(self._settings.cover.titleList):
+            orderList.insert(index, track)
+            print(track)
         orderList.pack()
-
-        self._widgetList = [run, browseFile, browseDir, quitDialog, orderList]
-
-
-
+        self._widgetList.append(orderList)
 
 # --------- GUI --------- #
 

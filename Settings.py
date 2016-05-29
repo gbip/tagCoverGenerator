@@ -91,12 +91,15 @@ class settings:
                     jsonSettings = json.load(iniFile)
                     self._textBPMColor = TkColorToCairoColor(jsonSettings["color"])
                     self._textSize = jsonSettings["text size"]
-                    self._cover.fileList = jsonSettings["fileList"]
+                    self.updateList(jsonSettings["fileList"])
         else:
             print("No configuration file found, generating a new one for you.")
             self.regenerateIni()
 
-
+    def updateList(self, pathList):
+        self._cover.fileList = pathList
+        for tracks in pathList:
+            self._cover.titleList.append(tracks.rsplit("/")[-1])
 
 #Convert color from cairo(value between 0 and 1) to Tk values (value between 0 and 255)
 def cairoColorToTkColor(color):
@@ -115,15 +118,24 @@ def TkColorToCairoColor(color):
 class cover:
     def __init__(self):
         #A list of absolute path to the file that will be used to draw the cover
-        self._fileList = []
+        self._fileList = list()
+        self._titleList = list()
 
     @property
     def fileList(self):
         return self._fileList
 
+    @property
+    def titleList(self):
+        return self._titleList
+
     @fileList.setter
     def fileList(self, value):
         self._fileList = value
+
+    @titleList.setter
+    def titleList(self, value):
+        self.titleList = value
 
     #Return the size of the longuest title
     def SizeOfLongestTitle(self):
@@ -137,7 +149,13 @@ class cover:
     def toJson(self):
         return json.dump({"fileList": self._fileList})
 
+    #Will permute 2 titles in the list (both the file list and the titleList
+    def permuteTitle(self, index1, index2):
+        backup = self.fileList[index1]
+        backupTitle = self.titleList[index1]
 
+        self.fileList[index1] = self.fileList[index2]
+        self.titleList[index1] = self.titleList[index2]
 
-
-programSettings = settings()
+        self.fileList[index2] = backup
+        self.titleList[index2] = backupTitle
