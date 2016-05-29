@@ -24,9 +24,7 @@ parser.add_argument('--file','-f', help="Pass a/some file(s) to process")
 parser.add_argument('--directory','-d', help="Pass a directory to process", nargs='+')
 parser.add_argument('--sort', '-s', help="Choose a sorting option, default: by alphabeletical order from the title field. Choose between: byTitle, byFilename, by tagNumber.")
 
-# --------- Function declaration --------- #
-
-# --------- Cairo stuff --------- #
+# --------- Main Class --------- #
 
 class Application :
     def __init__(self, width, height):
@@ -38,6 +36,14 @@ class Application :
         self._width = width
         self._height = height
         self._redrawList = True
+
+    @property
+    def settings(self):
+        return self._settings
+
+    @settings.setter
+    def settings(self, value):
+        self._settings = value
 
     def loop(self):
         self._tkTopLevel.mainloop()
@@ -75,6 +81,7 @@ class Application :
                    oldpos[1])
         if 'BPM' in audio:
             self._ctx.show_text(audio['BPM'][0])
+
 
     # Run through the list of file, and call displayTrack for each one of them. Then render the cairo context to png and clear the fileList
     def generateCover(self):
@@ -215,29 +222,28 @@ class Application :
 
 #Setting up the main program frame
 
+app = Application(1024, 1024)
+app.initWidgets()
 args = parser.parse_args()
-'''
+
 if len(sys.argv)>1:
+    app.settings.updateList([])
+    app.updateOrderList()
     if args.file is not None:
-        print("je passe")
         if os.path.exists(args.file) and os.path.isfile(args.file):
             print("Executing the script on the file :" + args.file)
-            Settings.programSettings.cover.fileList = [args.file]
+            app.settings.updateList([args.file])
         else:
             raise FileNotFoundError('Invalid file specified')
 
-    if args.directory is not None and not len(Settings.programSettings.cover.fileList) > 1:
+    if args.directory is not None and not len(app.settings.cover.fileList) > 1:
         # special path formated specially for os.path.[...] to work
         args.directory = ' '.join(args.directory)
         osDir = args.directory.replace("\\", "")
         if os.path.exists(osDir) and os.path.isdir(osDir):
             print("Executing the script on the directory :" + args.directory)
-            getPathDir(dir=args.directory)
+            app.getPathDir(dir=args.directory)
         else:
             raise FileNotFoundError("Invalid directory specified")
-    generateCover()
-else:
-'''
-app = Application(1024, 1024)
-app.initWidgets()
+
 app.loop()
