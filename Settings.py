@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License along with Mp3
 '''
 
 import json,os
-from Tkinter import IntVar
+from tkinter import IntVar
 
 # --------- Settings class --------- #
 #A class representing the variable needed for the program to run. It his not really properly nammed (it contains other thing that just pure settings parameters).
@@ -25,6 +25,8 @@ class settings:
         self._textSize = 0.015
         #the color of the BPM field
         self._textBPMColor = (0.8, 0.4, 0.2)
+        #the color of the artist field
+        self._textArtistColor = (0,0,0)
         #the position of the first line
         self._textVerticalPos = 0.2
         #the offset between 2 lines
@@ -35,10 +37,15 @@ class settings:
         self._cover = cover()
         #should display the artist ?
         self._displayArtist = False
+        #should display the track number ?
+        self._displayTrackNumber = False
 
     @property
     def textBPMColor(self):
         return self._textBPMColor
+    @property
+    def textArtistColor(self):
+        return self._textArtistColor
     @property
     def textSize(self):
         return self._textSize
@@ -54,10 +61,16 @@ class settings:
     @property
     def displayArtist(self):
         return self._displayArtist
+    @property
+    def displayNumber(self):
+        return self._displayTrackNumber
 
     @textBPMColor.setter
     def textBPMColor(self, color):
         self._textBPMColor = color
+    @textArtistColor.setter
+    def textArtistColor(self, value):
+        self._textArtistColor = value
     @textSize.setter
     def textSize(self, size):
         self._textSize = size
@@ -73,6 +86,9 @@ class settings:
     @displayArtist.setter
     def displayArtist(self, value):
         self._displayArtist = value
+    @displayNumber.setter
+    def displayNumber(self, value):
+        self._displayTrackNumber = value
 
     #Creat an empty .json file
     def createIniFile(self):
@@ -84,10 +100,12 @@ class settings:
     #Dump all the settings to an ini file in the form of a Json Object
     def regenerateIni(self):
             with open(self.__configurationFile, mode='w') as iniFile:
-                json.dump({"color": cairoColorToTkColor(self._textBPMColor),
+                json.dump({"BpmColor": cairoColorToTkColor(self._textBPMColor),
+                           "ArtistColor": cairoColorToTkColor(self._textArtistColor),
                            "text size": self._textSize,
                            "fileList":self._cover.fileList,
-                           "displayArtist": self._displayArtist}, iniFile)
+                           "displayArtist": self._displayArtist,
+                           "displayTrackNumber":self._displayTrackNumber}, iniFile)
             print("Saved settings to" + self.__configurationFile)
 
     #Look at the ini file and assign value to the settings object based on what is in the Json Object
@@ -98,10 +116,12 @@ class settings:
             with open(self.__configurationFile, mode='r') as iniFile:
                 if iniFile:
                     jsonSettings = json.load(iniFile)
-                    self._textBPMColor = TkColorToCairoColor(jsonSettings["color"])
+                    self._textBPMColor = TkColorToCairoColor(jsonSettings["BpmColor"])
+                    self._textArtistColor = TkColorToCairoColor(jsonSettings["ArtistColor"])
                     self._textSize = jsonSettings["text size"]
                     self.updateList(jsonSettings["fileList"])
                     self._displayArtist = jsonSettings["displayArtist"]
+                    self._displayTrackNumber = jsonSettings["displayTrackNumber"]
         else:
             print("No configuration file found, generating a new one for you.")
             self.regenerateIni()

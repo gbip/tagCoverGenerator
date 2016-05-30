@@ -13,9 +13,10 @@ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the GNU Gene
 You should have received a copy of the GNU General Public License along with Mp3CoverGenerator. If not, see < http://
     www.gnu.org / licenses / >.2
 '''
-import os, Tkinter, json, Settings, cairo, argparse, sys, tkFileDialog, tkColorChooser
+import os, tkinter , json, Settings,cairo, argparse, sys
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
+from tkinter import filedialog, colorchooser
 
 # --------- Argument parser --------- #
 
@@ -29,7 +30,7 @@ parser.add_argument('--sort', '-s', help="Choose a sorting option, default: by a
 class Application :
     def __init__(self, width, height):
         self._settings = Settings.settings()
-        self._tkTopLevel = Tkinter.Tk()
+        self._tkTopLevel = tkinter.Tk()
         self._widgetList = list()
         self._cairoSurface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         self._ctx = cairo.Context(self._cairoSurface)
@@ -49,41 +50,51 @@ class Application :
         self._tkTopLevel.mainloop()
     #Ask the user for a color and store so that it could be used as the drawn color for the BPM
     def pickBPMColor(self):
-        RGBColor = tkColorChooser.askcolor(
-            Settings.cairoColorToTkColor(self._settings.textBPMColor))
+        RGBColor = colorchooser.askcolor(Settings.cairoColorToTkColor(self._settings._textBPMColor))
         if RGBColor[0]:
-            self._settings.textBPMColor = (
-                [RGBColor[0][0] / 255, RGBColor[0][1] / 255, RGBColor[0][2] / 255])
+            self.settings.textBPMColor = ([RGBColor[0][0] / 255, RGBColor[0][1] / 255, RGBColor[0][2] / 255])
 
     # Add a track to the cairo context matchin the specified user input stored in a Settings object
     def displayTrack(self, trackname, tracknumber):
+        #Specialization between the different audio format supported | TODO : Make this a function
         if trackname.rsplit(".")[-1] == "mp3":
             audio = EasyID3(trackname)
         else:
             if trackname.rsplit(".")[-1] == "flac":
                 audio = FLAC(trackname)
 
+        #Initializating cairo | TODO : Add the option to select the font
         self._ctx.set_source_rgb(0.0, 0.0, 0.0)
         self._ctx.select_font_face("Georgia", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
         self._ctx.set_font_size(self._settings.textSize)
+        ###---/ Display the track number \---###
+        if self.settings.displayNumber:
+            number = str(tracknumber)
+            self._ctx.move_to(0.01,(0.01 + self._settings.textVerticalOffset) * tracknumber + self._settings.textVerticalPos)
+            self._ctx.show_text(number)
 
+        ###---/ Display the title \---###
         if 'title' in audio:
             title = audio['title'][0]
             self._ctx.move_to(0.05, (0.01 + self._settings.textVerticalOffset) * tracknumber + self._settings.textVerticalPos)
             self._ctx.show_text(title)
-
-            self._ctx.set_source_rgb(self._settings.textBPMColor[0], self._settings.textBPMColor[1],
-                          self._settings.textBPMColor[2])
         oldpos = self._ctx.get_current_point()
 
-        if self._settings.displayArtist and 'artist' in audio:
+        ###---/ Display the artist \---###
+        if self.settings.displayArtist and 'artist' in audio:
+            self._ctx.set_source_rgb(self._settings.textArtistColor[0], self._settings.textArtistColor[1],
+                                     self._settings.textArtistColor[2])
             artist = audio['artist'][0]
-            self._ctx.move_to(self._settings.cover.SizeOfLongestTitle() * self._settings.textSize - 0.9, oldpos[1])
+            self._ctx.move_to(self._settings.cover.SizeOfLongestTitle() * self._settings.textSize - 0.8, oldpos[1])
             self._ctx.show_text(artist)
 
         oldpos = self._ctx.get_current_point()
         self._ctx.move_to(oldpos[0] +0.1, oldpos[1])
+
+        ###---/ Display the BPM\---###
         if 'BPM' in audio:
+            self._ctx.set_source_rgb(self._settings.textBPMColor[0], self._settings.textBPMColor[1],
+                                     self._settings.textBPMColor[2])
             self._ctx.show_text(audio['BPM'][0])
 
 
@@ -100,7 +111,7 @@ class Application :
     # Ask the user for the path to a file, and add it to the fileList stored in a settings object
     def getPathFile(self):
         temp = []
-        temp.append(tkFileDialog.askopenfilename())
+        temp.append(filedialog.askopenfilename())
         self._settings.cover.fileList = temp
         print(self._settings.cover.fileList)
         self.updateOrderList()
@@ -115,7 +126,7 @@ class Application :
                 else:
                     raise SyntaxError("Expected a directory")
         else:
-            relevant_path = tkFileDialog.askdirectory()
+            relevant_path = filedialog.askdirectory()
         print(relevant_path)
         pathList = []
         titleList = []
@@ -141,14 +152,14 @@ class Application :
 
     # A dialog that open on clicking on the "quit" button wich will ask the user if he want or not to the save his settings
     def exitDialog(self):
-        window = Tkinter.Toplevel()
-        dialog = Tkinter.Label(window, text="Save settings before quitting ?")
+        window = tkinter.Toplevel()
+        dialog = tkinter.Label(window, text="Save settings before quitting ?")
         window.wm_minsize(400,100)
         window.resizable(width=False, height=False)
         dialog.pack()
-        yes = Tkinter.Button(window, text="Yes", command=self.saveSettingsAndQuit)
+        yes = tkinter.Button(window, text="Yes", command=self.saveSettingsAndQuit)
         yes.place(height=40, relwidth=0.4, relx=0.25, rely=0.8, anchor="center")
-        no = Tkinter.Button(window, text="No", command=self.quitWithoutSaving)
+        no = tkinter.Button(window, text="No", command=self.quitWithoutSaving)
         no.place(height=40, relwidth=0.4, relx=0.75, rely=0.8, anchor="center")
 
     def moveUp(self):
@@ -173,7 +184,10 @@ class Application :
         self._widgetList.append(listBox)
 
     def changeDisplayArtist(self):
-        self._settings._displayArtist = (not self._settings.displayArtist)
+        self.settings.displayArtist = (not self.settings.displayArtist)
+
+    def changeDisplayTrackNumber(self):
+        self.settings.displayNumber = (not self.settings.displayNumber)
 
     def initWidgets(self):
         #initialize all the cairo stuff
@@ -190,44 +204,47 @@ class Application :
         self._settings.parseIniFile()
 
         # The "Generate Cover" button. It calls the generateCover function on click
-        run = Tkinter.Button(self._tkTopLevel, text="Generate Cover", command=self.generateCover)
+        run = tkinter.Button(self._tkTopLevel, text="Generate Cover", command=self.generateCover)
         run.place(relwidth=0.6, relheight=0.15, relx=0.5, rely=0.92, anchor="center")
         self._widgetList.append(run)
 
 
-        browseFile = Tkinter.Button(self._tkTopLevel, text="Browse a file", command=self.getPathFile, )
+        browseFile = tkinter.Button(self._tkTopLevel, text="Browse a file", command=self.getPathFile, )
         browseFile.place(relx=0.15, rely=0.05, relwidth=0.3, relheight=0.1, anchor="center")
         self._widgetList.append(browseFile)
 
-        browseDir = Tkinter.Button(self._tkTopLevel, text="Browse a directory", command=self.getPathDir)
+        browseDir = tkinter.Button(self._tkTopLevel, text="Browse a directory", command=self.getPathDir)
         browseDir.place(relx=0.45, rely=0.05, relwidth=0.3, relheight=0.1, anchor="center")
         self._widgetList.append(browseDir)
 
-        pickColor = Tkinter.Button(self._tkTopLevel, text="Pick a color for the BPM", command=self.pickBPMColor)
+        pickColor = tkinter.Button(self._tkTopLevel, text="Pick a color for the BPM", command=self.pickBPMColor)
         pickColor.place(relx=0.8, rely=0.05, relwidth=0.4, relheight=0.1, anchor="center")
         self._widgetList.append(pickColor)
 
         # saveSettings = tkinter.Button(self._tkTopLevel, text="Save settings", command=saveSettings)
         # saveSettings.pack()
 
-        quitDialog = Tkinter.Button(self._tkTopLevel, text="Quit", command=self.exitDialog)
+        quitDialog = tkinter.Button(self._tkTopLevel, text="Quit", command=self.exitDialog)
         quitDialog.place(relwidth=0.2, relheight=0.15, relx=0.9, rely=0.92, anchor="center")
         self._widgetList.append(quitDialog)
 
-        moveUp = Tkinter.Button(self._tkTopLevel, text="Up", command=self.moveUp)
+        moveUp = tkinter.Button(self._tkTopLevel, text="Up", command=self.moveUp)
         moveUp.place(relx=0.6, rely=0.6,anchor="n")
         self._widgetList.append(moveUp)
 
-        moveDown = Tkinter.Button(self._tkTopLevel, text="Down", command=self.moveDown)
+        moveDown = tkinter.Button(self._tkTopLevel, text="Down", command=self.moveDown)
         moveDown.place(relx=0.3, rely=0.6,anchor="n"
                        )
         self._widgetList.append(moveDown)
 
-        displayArtist = Tkinter.Checkbutton(self._tkTopLevel, text="Display artist", command=self.changeDisplayArtist)
+        displayArtist = tkinter.Checkbutton(self._tkTopLevel, text="Display artist", command=self.changeDisplayArtist)
         displayArtist.place(relx = 0.2, rely=0.8)
 
+        displayTrackNumber = tkinter.Checkbutton(self._tkTopLevel, text="Display track number", command=self.changeDisplayTrackNumber)
+        displayTrackNumber.place(relx = 0.2, rely=0.75)
+
         #This should be the last item in the list ALWAYS
-        orderList = Tkinter.Listbox(self._tkTopLevel, selectmode = "Browse", width=30)
+        orderList = tkinter.Listbox(self._tkTopLevel, selectmode = "Browse", width=30)
         for index, track in enumerate(self._settings.cover.titleList):
             orderList.insert(index, track)
             print(track)
@@ -236,6 +253,8 @@ class Application :
 
         if self._settings.displayArtist:
             displayArtist.select()
+        if self._settings.displayNumber:
+            displayTrackNumber.select()
 
 # --------- GUI --------- #
 
