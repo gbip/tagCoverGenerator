@@ -202,7 +202,7 @@ class cover:
         self.titleList = value
 
     #Return the size of the longuest title
-    def SizeOfLongestTitle(self):
+    def longestFileName(self):
         bestScore = 0
         for title in self.fileList:
             if len(title) > bestScore:

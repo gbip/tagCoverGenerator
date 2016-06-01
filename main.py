@@ -45,7 +45,7 @@ class Application :
     @settings.setter
     def settings(self, value):
         self._settings = value
-    #The main Tkinter llop
+    #The main Tkinter loop
     def loop(self):
         self._tkTopLevel.mainloop()
     #Ask the user for a color and store so that it could be used as the drawn color for the BPM
@@ -54,24 +54,35 @@ class Application :
         if RGBColor[0]:
             self.settings.textBPMColor = ([RGBColor[0][0] / 255, RGBColor[0][1] / 255, RGBColor[0][2] / 255])
 
-    # Add a track to the cairo context matchin the specified user input stored in a Settings object
-    def displayTrack(self, trackname, tracknumber):
-        #Specialization between the different audio format supported | TODO : Make this a function
+    #return the adequate audio object, loaded with the correct mutagen object
+    def getAudioData(self, trackname):
         if trackname.rsplit(".")[-1] == "mp3":
             audio = EasyID3(trackname)
         else:
             if trackname.rsplit(".")[-1] == "flac":
                 audio = FLAC(trackname)
+        return audio
+
+    #display track on the class cairo context
+    def displayTrack(self, trackname, tracknumber):
+        audio = self.getAudioData(trackname)
 
         #Default space between different fields
-        spacing = 0.05
+        spacing = 0.04
         lastDrawnString = ""
+
+
 
 
         #Initializating cairo | TODO : Add the option to select the font
         self._ctx.set_source_rgb(0.0, 0.0, 0.0)
         self._ctx.select_font_face("Georgia", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
         self._ctx.set_font_size(self._settings.textSize)
+
+        #The absolute length of the longest title/artist in cairo space
+        longestTitleSize = self.longestField('title')
+        longestArtistSize = self.longestField('artist')
+
 
         ###---/ Display the track number \---###
         if self.settings.displayNumber:
@@ -92,14 +103,16 @@ class Application :
         if self.settings.displayArtist and 'artist' in audio:
             self._ctx.set_source_rgb(self._settings.textArtistColor[0], self._settings.textArtistColor[1],self._settings.textArtistColor[2])
             artist = audio['artist'][0]
-            self._ctx.move_to(self._settings.cover.SizeOfLongestTitle() * self._settings.textSize - 0.8, oldpos[1])
+            self._ctx.move_to(longestTitleSize + 2*spacing, oldpos[1])
             self._ctx.show_text(artist)
-
         oldpos = self._ctx.get_current_point()
-        self._ctx.move_to(oldpos[0] + spacing, oldpos[1])
 
         ###---/ Display the BPM\---###
         if 'BPM' in audio:
+            if self.settings.displayArtist:
+                self._ctx.move_to((longestTitleSize+longestArtistSize) + 3 * spacing, oldpos[1])
+            else:
+                self._ctx.move_to(longestTitleSize + 2*spacing, oldpos[1])
             self._ctx.set_source_rgb(self.settings.textBPMColor[0], self.settings.textBPMColor[1],
                                      self.settings.textBPMColor[2])
             self._ctx.show_text(audio['BPM'][0])
@@ -107,7 +120,7 @@ class Application :
         oldpos = self._ctx.get_current_point()
         self._ctx.move_to(oldpos[0] + spacing, oldpos[1])
         ###---/ Display the Key\---###
-        if 'initialkey' in audio:
+        if 'initialkey' in audio and self.settings.displayKey:
             key = audio['initialkey'][0]
             color = self.settings.getKeyColor(key)
             self._ctx.set_source_rgb(color[0], color[1], color[2])
@@ -125,6 +138,18 @@ class Application :
         while os.path.isfile(self.settings.outputPath+"/cover" + str(i) +".png"):
             i += 1
         self._cairoSurface.write_to_png(self.settings.outputPath+"/cover" + str(i) +".png")
+        self._ctx.set_source_rgb(0.98,0.98,0.98)
+        self._ctx.fill()
+        self._ctx.paint()
+
+    # Return a string
+    def longestField(self, field):
+        longuestFieldSize = 0
+        for title in self.settings.cover.fileList:
+            audio = self.getAudioData(title)
+            if field in audio and self._ctx.text_extents(audio[field][0])[4] > longuestFieldSize:
+                longuestFieldSize = self._ctx.text_extents(audio[field][0])[4]
+        return longuestFieldSize
 
     # Ask the user for the path to a file, and add it to the fileList stored in a settings object
     def getPathFile(self):
