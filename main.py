@@ -120,9 +120,11 @@ class Application :
         for file in self._settings.cover.fileList:
             self.displayTrack(file, i)
             i += 1
-        self._cairoSurface.write_to_png("example.png")
-        self._settings.cover.fileList = []
-        print(str(self.settings.textBPMColor))
+        i = 1
+        #check wether or not the file CoverXXX.png exists and increments a counter
+        while os.path.isfile(self.settings.outputPath+"/cover" + str(i) +".png"):
+            i += 1
+        self._cairoSurface.write_to_png(self.settings.outputPath+"/cover" + str(i) +".png")
 
     # Ask the user for the path to a file, and add it to the fileList stored in a settings object
     def getPathFile(self):
@@ -206,6 +208,12 @@ class Application :
     def changeDisplayTrackNumber(self):
         self.settings.displayNumber = (not self.settings.displayNumber)
 
+    def changeDisplayKey(self):
+        self.settings.displayKey = (not self.settings.displayKey)
+
+    def changOutputPath(self):
+        self._settings.outputPath = filedialog.askdirectory()
+
     def initWidgets(self):
         #initialize all the cairo stuff
         self._ctx.scale(self._width, self._height)
@@ -260,6 +268,12 @@ class Application :
         displayTrackNumber = tkinter.Checkbutton(self._tkTopLevel, text="Display track number", command=self.changeDisplayTrackNumber)
         displayTrackNumber.place(relx = 0.2, rely=0.75)
 
+        displayKey = tkinter.Checkbutton(self._tkTopLevel, text="Display key", command=self.changeDisplayKey)
+        displayKey.place(relx = 0.2, rely=0.7)
+
+        coverOutputPath =  tkinter.Button(self._tkTopLevel, text="Choose path", command = self.changOutputPath)
+        coverOutputPath.place(relwidth=0.2, relheight=0.15, relx=0.1, rely=0.92, anchor="center")
+
         #This should be the last item in the list ALWAYS
         orderList = tkinter.Listbox(self._tkTopLevel, selectmode = "Browse", width=30)
         for index, track in enumerate(self._settings.cover.titleList):
@@ -272,6 +286,8 @@ class Application :
             displayArtist.select()
         if self._settings.displayNumber:
             displayTrackNumber.select()
+        if self._settings.displayKey:
+            displayKey.select()
 
 # --------- GUI --------- #
 

@@ -46,6 +46,10 @@ class settings:
         self._displayArtist = False
         #should display the track number ?
         self._displayTrackNumber = False
+        #should display the key ?
+        self._displayKey = False
+        #path to save the cover
+        self._coverPath = ""
 
     @property
     def textBPMColor(self):
@@ -71,6 +75,12 @@ class settings:
     @property
     def displayNumber(self):
         return self._displayTrackNumber
+    @property
+    def displayKey(self):
+        return self._displayKey
+    @property
+    def outputPath(self):
+        return self._coverPath
 
     @textBPMColor.setter
     def textBPMColor(self, color):
@@ -96,6 +106,12 @@ class settings:
     @displayNumber.setter
     def displayNumber(self, value):
         self._displayTrackNumber = value
+    @displayKey.setter
+    def displayKey(self, value):
+        self._displayKey = value
+    @outputPath.setter
+    def outputPath(self, value):
+        self._coverPath = value
 
     #Creat an empty .json file
     def createIniFile(self):
@@ -112,7 +128,9 @@ class settings:
                            "text size": self._textSize,
                            "fileList":self._cover.fileList,
                            "displayArtist": self._displayArtist,
-                           "displayTrackNumber":self._displayTrackNumber}, iniFile)
+                           "displayTrackNumber":self._displayTrackNumber,
+                           "displayKey":self._displayKey,
+                           "coverPath":self._coverPath}, iniFile)
             print("Saved settings to" + self.__configurationFile)
 
     #Look at the ini file and assign value to the settings object based on what is in the Json Object
@@ -129,6 +147,8 @@ class settings:
                     self.updateList(jsonSettings["fileList"])
                     self._displayArtist = jsonSettings["displayArtist"]
                     self._displayTrackNumber = jsonSettings["displayTrackNumber"]
+                    self._displayKey = jsonSettings["displayKey"]
+                    self._coverPath = jsonSettings["coverPath"]
         else:
             print("No configuration file found, generating a new one for you.")
             self.regenerateIni()
