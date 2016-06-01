@@ -63,39 +63,55 @@ class Application :
             if trackname.rsplit(".")[-1] == "flac":
                 audio = FLAC(trackname)
 
+        #Default space between different fields
+        spacing = 0.05
+        lastDrawnString = ""
+
+
         #Initializating cairo | TODO : Add the option to select the font
         self._ctx.set_source_rgb(0.0, 0.0, 0.0)
         self._ctx.select_font_face("Georgia", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
         self._ctx.set_font_size(self._settings.textSize)
+
         ###---/ Display the track number \---###
         if self.settings.displayNumber:
             number = str(tracknumber)
             self._ctx.move_to(0.01,(0.01 + self._settings.textVerticalOffset) * tracknumber + self._settings.textVerticalPos)
             self._ctx.show_text(number)
+            lastDrawnString = number
 
         ###---/ Display the title \---###
         if 'title' in audio:
             title = audio['title'][0]
-            self._ctx.move_to(0.05, (0.01 + self._settings.textVerticalOffset) * tracknumber + self._settings.textVerticalPos)
+            self._ctx.move_to(spacing, (0.01 + self._settings.textVerticalOffset) * tracknumber + self._settings.textVerticalPos)
             self._ctx.show_text(title)
+            lastDrawnString = title
         oldpos = self._ctx.get_current_point()
 
         ###---/ Display the artist \---###
         if self.settings.displayArtist and 'artist' in audio:
-            self._ctx.set_source_rgb(self._settings.textArtistColor[0], self._settings.textArtistColor[1],
-                                     self._settings.textArtistColor[2])
+            self._ctx.set_source_rgb(self._settings.textArtistColor[0], self._settings.textArtistColor[1],self._settings.textArtistColor[2])
             artist = audio['artist'][0]
             self._ctx.move_to(self._settings.cover.SizeOfLongestTitle() * self._settings.textSize - 0.8, oldpos[1])
             self._ctx.show_text(artist)
 
         oldpos = self._ctx.get_current_point()
-        self._ctx.move_to(oldpos[0] +0.1, oldpos[1])
+        self._ctx.move_to(oldpos[0] + spacing, oldpos[1])
 
         ###---/ Display the BPM\---###
         if 'BPM' in audio:
-            self._ctx.set_source_rgb(self._settings.textBPMColor[0], self._settings.textBPMColor[1],
-                                     self._settings.textBPMColor[2])
+            self._ctx.set_source_rgb(self.settings.textBPMColor[0], self.settings.textBPMColor[1],
+                                     self.settings.textBPMColor[2])
             self._ctx.show_text(audio['BPM'][0])
+
+        oldpos = self._ctx.get_current_point()
+        self._ctx.move_to(oldpos[0] + spacing, oldpos[1])
+        ###---/ Display the Key\---###
+        if 'initialkey' in audio:
+            key = audio['initialkey'][0]
+            color = self.settings.getKeyColor(key)
+            self._ctx.set_source_rgb(color[0], color[1], color[2])
+            self._ctx.show_text(key)
 
 
     # Run through the list of file, and call displayTrack for each one of them. Then render the cairo context to png and clear the fileList
@@ -106,7 +122,7 @@ class Application :
             i += 1
         self._cairoSurface.write_to_png("example.png")
         self._settings.cover.fileList = []
-        print("Generated new cover")
+        print(str(self.settings.textBPMColor))
 
     # Ask the user for the path to a file, and add it to the fileList stored in a settings object
     def getPathFile(self):
@@ -119,6 +135,7 @@ class Application :
     # This function does 2 things : 1) it ask the user for a path, and look for every mp3 file in it and store the path to each one of them in a settings object
     #                               2) given a path to a directory in argument, it does the same thing as 1) but using the path given as argument instead of asking the user for a path
     def getPathDir(self,**kwargs):
+        self.settings.resetList()
         if len(kwargs) >= 1:
             for key, value in kwargs.items():
                 if key == 'dir':
