@@ -13,7 +13,7 @@ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the GNU Gene
 You should have received a copy of the GNU General Public License along with Mp3CoverGenerator. If not, see < http://
     www.gnu.org / licenses / >.2
 '''
-import os, tkinter , json, Settings,cairo, argparse, sys
+import os, tkinter , json, Settings, cairo, argparse, sys
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from tkinter import filedialog, colorchooser
