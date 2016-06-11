@@ -14,18 +14,19 @@ You should have received a copy of the GNU General Public License along with Mp3
     www.gnu.org / licenses / >.2
 '''
 
-import json,os
+import json, os, cairo
+from PIL import Image
 
 # --------- Settings class --------- #
 #A class representing the variable needed for the program to run. It his not really properly nammed (it contains other thing that just pure settings parameters).
 class settings:
     # a dict with all keys and the matching RGB triplet color int the camelot wheel
     _keyColor = {'1A': (112, 239, 208), '2A': (146, 242, 159), '3A': (177, 244, 130), '4A': (228, 228, 165), '5A': (255, 198, 170),
-                 '6A': (255, 175, 188), '7A': (255, 176, 208), '8A': (241, 176, 240), '9A': (229, 179, 255), '10A': (197, 209, 255),
-                 '11A': (160, 230, 255), '12A': (112, 239, 208),
-                 '1B': (0, 239, 202), '2B': (38, 240, 126), '3B': (129, 244, 67), '4B': (224, 203, 109), '5B': (255, 160, 121),
-                 '6B': (255, 135, 147), '7B': (255, 127, 180), '8B': (241, 127, 220), '9B': (208, 139, 255), '10B': (158, 180, 255),
-                 '11B': (76, 216, 250), '12B': (0, 234, 236)}
+                     '6A': (255, 175, 188), '7A': (255, 176, 208), '8A': (241, 176, 240), '9A': (229, 179, 255), '10A': (197, 209, 255),
+                     '11A': (160, 230, 255), '12A': (112, 239, 208),
+                     '1B': (0, 239, 202), '2B': (38, 240, 126), '3B': (129, 244, 67), '4B': (224, 203, 109), '5B': (255, 160, 121),
+                     '6B': (255, 135, 147), '7B': (255, 127, 180), '8B': (241, 127, 220), '9B': (208, 139, 255), '10B': (158, 180, 255),
+                     '11B': (76, 216, 250), '12B': (0, 234, 236)}
 
     def __init__(self):
         #the size of the text that will be displayed upon drawing the cover
@@ -35,7 +36,7 @@ class settings:
         #the color of the artist field
         self._textArtistColor = (0,0,0)
         #the position of the first line
-        self._textVerticalPos = 0.2
+        self._textVerticalPos = 0
         #the offset between 2 lines
         self._textVerticalOffset = 0.05
         #the absolute path to a configuration file
@@ -164,6 +165,29 @@ class settings:
 
     def getKeyColor(self,key):
         return TkColorToCairoColor(self._keyColor[key])
+
+    def generatekeyMapFile(self):
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 100, 32)
+        ctx = cairo.Context(surface)
+        ctx.set_source_rgb(0, 0, 0)
+        ctx.paint()
+        for index, key in enumerate(self._keyColor):
+            color = TkColorToCairoColor(self._keyColor[key])
+            ctx.set_source_rgb(color[0], color[1], color[2])
+            ctx.rectangle((index) * 4, 0, 4, 8)
+            ctx.fill()
+            surface.write_to_png("key.png")
+
+    def initalizeColorDictFromFile(self):
+            im = Image.open("key.png")
+            pixel = im.load()
+            if im.size[0] == 96 and im.size[1] == 32:
+                for index, key in enumerate(sorted(self._keyColor)):
+                    color = pixel[index*4,2]
+                    self._keyColor[key] = color
+            else :
+                print("Incorrect key file provided, should be 96*32")
+
 
 #Convert color from cairo(value between 0 and 1) to Tk values (value between 0 and 255)
 def cairoColorToTkColor(color):

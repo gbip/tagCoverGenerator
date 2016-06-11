@@ -67,6 +67,8 @@ class Application :
     def displayTrack(self, trackname, tracknumber):
         audio = self.getAudioData(trackname)
 
+        font = "Calibri"
+
         #Default space between different fields
         spacing = 0.04
         lastDrawnString = ""
@@ -76,7 +78,7 @@ class Application :
 
         #Initializating cairo | TODO : Add the option to select the font
         self._ctx.set_source_rgb(0.0, 0.0, 0.0)
-        self._ctx.select_font_face("Georgia", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        self._ctx.select_font_face(font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         self._ctx.set_font_size(self._settings.textSize)
 
         #The absolute length of the longest title/artist in cairo space
@@ -109,6 +111,8 @@ class Application :
 
         ###---/ Display the BPM\---###
         if 'BPM' in audio:
+            self._ctx.select_font_face(font, cairo.FONT_SLANT_NORMAL
+                                       , cairo.FONT_WEIGHT_BOLD)
             if self.settings.displayArtist:
                 self._ctx.move_to((longestTitleSize+longestArtistSize) + 3 * spacing, oldpos[1])
             else:
@@ -121,6 +125,8 @@ class Application :
         self._ctx.move_to(oldpos[0] + spacing, oldpos[1])
         ###---/ Display the Key\---###
         if 'initialkey' in audio and self.settings.displayKey:
+            self._ctx.select_font_face(font, cairo.FONT_SLANT_NORMAL
+                                       , cairo.FONT_WEIGHT_BOLD)
             key = audio['initialkey'][0]
             color = self.settings.getKeyColor(key)
             self._ctx.set_source_rgb(color[0], color[1], color[2])
@@ -313,6 +319,7 @@ class Application :
             displayTrackNumber.select()
         if self._settings.displayKey:
             displayKey.select()
+        self.settings.initalizeColorDictFromFile()
 
 # --------- GUI --------- #
 
