@@ -171,18 +171,31 @@ class settings:
         ctx = cairo.Context(surface)
         ctx.set_source_rgb(0, 0, 0)
         ctx.paint()
-        for index, key in enumerate(self._keyColor):
+        for index, key in enumerate(sorted(self._keyColor)):
             color = TkColorToCairoColor(self._keyColor[key])
             ctx.set_source_rgb(color[0], color[1], color[2])
             ctx.rectangle((index) * 4, 0, 4, 8)
             ctx.fill()
             surface.write_to_png("key.png")
 
+    def generateKeyHelpFile(self):
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 480, 40)
+        ctx = cairo.Context(surface)
+        ctx.set_source_rgb(1, 1, 1)
+        ctx.paint()
+        ctx.select_font_face("Calibri", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        for index, key in enumerate(sorted(self._keyColor)):
+            ctx.set_source_rgb(0, 0, 0)
+            ctx.move_to(index * 20, 20)
+            ctx.show_text(key)
+        surface.write_to_png("key_help.png")
+
+
     def initalizeColorDictFromFile(self):
             im = Image.open("key.png")
             pixel = im.load()
             if im.size[0] == 96 and im.size[1] == 8:
-                for index, key in enumerate(self._keyColor):
+                for index, key in enumerate(sorted(self._keyColor)):
                     color = pixel[index*4,4]
                     self._keyColor[key] = color
             else :
