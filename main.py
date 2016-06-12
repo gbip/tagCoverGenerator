@@ -214,17 +214,15 @@ class Application :
 
     def moveUp(self):
         selected = self._widgetList[-1].curselection()
-        if selected > 1:
+        if selected:
             self._settings.cover.permuteTitle(selected[0]-1, selected[0])
-        self.updateOrderList()
+            self.updateOrderList()
 
     def moveDown(self):
         selected = self._widgetList[-1].curselection()
-        if selected > 1:
+        if selected[0] < len(self.settings.cover.fileList)-1:
             self._settings.cover.permuteTitle(selected[0] + 1, selected[0])
-        self.updateOrderList()
-        bleuh = self._settings.displayArtist
-        print(bleuh)
+            self.updateOrderList()
 
     def updateOrderList(self):
         listBox = self._widgetList.pop()
