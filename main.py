@@ -319,6 +319,7 @@ class Application :
             displayTrackNumber.select()
         if self._settings.displayKey:
             displayKey.select()
+        self.settings.generatekeyMapFile()
         self.settings.initalizeColorDictFromFile()
 
 # --------- GUI --------- #

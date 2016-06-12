@@ -167,7 +167,7 @@ class settings:
         return TkColorToCairoColor(self._keyColor[key])
 
     def generatekeyMapFile(self):
-        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 100, 32)
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 96, 8)
         ctx = cairo.Context(surface)
         ctx.set_source_rgb(0, 0, 0)
         ctx.paint()
@@ -181,9 +181,9 @@ class settings:
     def initalizeColorDictFromFile(self):
             im = Image.open("key.png")
             pixel = im.load()
-            if im.size[0] == 96 and im.size[1] == 32:
-                for index, key in enumerate(sorted(self._keyColor)):
-                    color = pixel[index*4,2]
+            if im.size[0] == 96 and im.size[1] == 8:
+                for index, key in enumerate(self._keyColor):
+                    color = pixel[index*4,4]
                     self._keyColor[key] = color
             else :
                 print("Incorrect key file provided, should be 96*32")
